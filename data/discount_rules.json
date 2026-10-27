@@ -1,0 +1,156 @@
+{
+  "full_reduction": [
+    {
+      "id": "FR_30_5",
+      "name": "平台满30减5",
+      "threshold": 30,
+      "reduce": 5,
+      "description": "单个平台订单满30元减5元。"
+    },
+    {
+      "id": "FR_60_10",
+      "name": "生活消费满60减10",
+      "threshold": 60,
+      "reduce": 10,
+      "description": "单个平台订单满60元减10元。"
+    },
+    {
+      "id": "FR_100_20",
+      "name": "家庭采购满100减20",
+      "threshold": 100,
+      "reduce": 20,
+      "description": "单个平台订单满100元减20元，适合家庭集中采购。"
+    },
+    {
+      "id": "FR_200_45",
+      "name": "品质生活满200减45",
+      "threshold": 200,
+      "reduce": 45,
+      "description": "单个平台订单满200元减45元。"
+    },
+    {
+      "id": "FR_300_70",
+      "name": "大额采购满300减70",
+      "threshold": 300,
+      "reduce": 70,
+      "description": "单个平台订单满300元减70元，适合家电、旅行和家庭集中采购。"
+    }
+  ],
+  "bundle_rules": [
+    {
+      "id": "BUNDLE_FOOD_59_8",
+      "name": "餐饮美食凑单满59减8",
+      "threshold": 59,
+      "reduce": 8,
+      "category": "餐饮美食",
+      "description": "餐饮美食订单满59元减8元，适合聚餐和家庭用餐。"
+    },
+    {
+      "id": "BUNDLE_SNACK_59_8",
+      "name": "零食饮料凑单满59减8",
+      "threshold": 59,
+      "reduce": 8,
+      "category": "零食饮料",
+      "description": "零食饮料订单满59元减8元，适合居家囤货。"
+    },
+    {
+      "id": "BUNDLE_LIFE_79_12",
+      "name": "商超日用凑单满79减12",
+      "threshold": 79,
+      "reduce": 12,
+      "category": "生活用品",
+      "description": "生活用品订单满79元减12元。"
+    },
+    {
+      "id": "BUNDLE_HOME_99_15",
+      "name": "家居生活满99减15",
+      "threshold": 99,
+      "reduce": 15,
+      "category": "家居生活",
+      "description": "家居生活订单满99元减15元。"
+    },
+    {
+      "id": "BUNDLE_DIGITAL_150_25",
+      "name": "数码家电凑单满150减25",
+      "threshold": 150,
+      "reduce": 25,
+      "category": "数码家电",
+      "description": "数码家电订单满150元减25元，适合耳机、小家电组合购买。"
+    },
+    {
+      "id": "BUNDLE_TRAVEL_199_30",
+      "name": "旅行住宿满199减30",
+      "threshold": 199,
+      "reduce": 30,
+      "category": "旅游住宿",
+      "description": "旅行住宿订单满199元减30元，适合周末出游。"
+    }
+  ],
+  "member_discounts": [
+    {
+      "id": "MEMBER_95",
+      "name": "生活会员95折",
+      "type": "rate",
+      "rate": 0.95,
+      "min_spend": 30,
+      "max_discount": 20,
+      "description": "开通生活会员后，订单满30元享95折，最多优惠20元。"
+    },
+    {
+      "id": "NEW_USER_99_15",
+      "name": "新客专享满99减15",
+      "type": "threshold",
+      "threshold": 99,
+      "reduce": 15,
+      "min_spend": 99,
+      "description": "新用户首单满99元减15元。"
+    }
+  ],
+  "platform_offers": {
+    "淘宝": {
+      "id": "TAOBAO_LIFE_98",
+      "name": "淘宝生活频道98折",
+      "type": "rate",
+      "rate": 0.98,
+      "min_spend": 50,
+      "max_discount": 10,
+      "description": "淘宝生活频道订单满50元享98折，最多优惠10元。"
+    },
+    "拼多多": {
+      "id": "PDD_LIFE_97",
+      "name": "拼多多百亿补贴97折",
+      "type": "rate",
+      "rate": 0.97,
+      "min_spend": 39,
+      "max_discount": 12,
+      "description": "拼多多百亿补贴订单满39元享97折，最多优惠12元。"
+    },
+    "京东": {
+      "id": "JD_LIFE_98",
+      "name": "京东生活会员98折",
+      "type": "rate",
+      "rate": 0.98,
+      "min_spend": 59,
+      "max_discount": 15,
+      "description": "京东生活会员订单满59元享98折，最多优惠15元。"
+    },
+    "美团": {
+      "id": "MEITUAN_LIFE_95",
+      "name": "美团团购95折",
+      "type": "rate",
+      "rate": 0.95,
+      "min_spend": 50,
+      "max_discount": 12,
+      "description": "美团团购订单满50元享95折，最多优惠12元。"
+    },
+    "携程": {
+      "id": "CTRIP_TRAVEL_95",
+      "name": "携程旅行95折",
+      "type": "rate",
+      "rate": 0.95,
+      "min_spend": 199,
+      "max_discount": 40,
+      "description": "携程指定旅行产品满199元享95折，最多优惠40元。"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+# 本地环境变量文件包含密钥，严禁提交。
+.env
+.env.*
+!.env.example
+
+# Python 运行与构建产物。
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 本地虚拟环境。
+.venv/
+venv/
+
+# 常见编辑器与操作系统文件。
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
