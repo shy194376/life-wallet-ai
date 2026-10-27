@@ -1,5 +1,7 @@
 # 全场景生活消费决策智能体
 
+**在线体验：[https://shy194376.github.io/life-wallet-ai/](https://shy194376.github.io/life-wallet-ai/)**
+
 ## 项目简介
 
 全场景生活消费决策智能体是面向全国人工智能应用创新大赛的 AI Agent 演示项目。项目以个人与家庭的真实生活消费场景为核心，通过自然语言理解、OpenAI Function Calling、多平台商品与服务检索、优惠规则计算和预算分析，为用户生成可解释、可执行、可复盘的消费方案。

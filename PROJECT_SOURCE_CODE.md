@@ -1,6 +1,6 @@
 # 全场景生活消费决策智能体 - 完整源码
 
-> 自动生成时间：2026-10-27 22:10:03
+> 自动生成时间：2026-10-27 22:33:53
 >
 > 本文件汇总当前项目主要源码、云端部署配置和运行文档，便于比赛提交与审阅。
 
@@ -7694,6 +7694,8 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
 ````markdown
 # 全场景生活消费决策智能体
 
+**在线体验：[https://shy194376.github.io/life-wallet-ai/](https://shy194376.github.io/life-wallet-ai/)**
+
 ## 项目简介
 
 全场景生活消费决策智能体是面向全国人工智能应用创新大赛的 AI Agent 演示项目。项目以个人与家庭的真实生活消费场景为核心，通过自然语言理解、OpenAI Function Calling、多平台商品与服务检索、优惠规则计算和预算分析，为用户生成可解释、可执行、可复盘的消费方案。
@@ -8053,7 +8055,8 @@ def chat_with_agent():
 **适用项目：** 全国人工智能应用创新大赛参赛作品  
 **文档版本：** V1.2  
 **适用系统：** Windows 10 / Windows 11  
-**项目目录：** `C:\Users\S\Desktop\人工智能大赛`
+**项目目录：** `C:\Users\S\Desktop\人工智能大赛`  
+**在线体验网址：** https://shy194376.github.io/life-wallet-ai/
 
 ---
 
