@@ -10,7 +10,7 @@
 - tags：用于辅助决策的特征标签；
 - business_hours：营业时间。
 
-该文件仅用于基础框架演示，不包含真实用户或商户隐私数据。
+该文件仅用于基础功能体验，不包含真实用户或商户隐私数据。
 """
 
 from typing import Any, Dict, Tuple

@@ -1,8 +1,8 @@
 # 全场景生活消费决策智能体 - 完整源码
 
-> 自动生成时间：2026-10-27 22:33:53
+> 自动生成时间：2026-10-27 22:53:43
 >
-> 本文件汇总当前项目主要源码、云端部署配置和运行文档，便于比赛提交与审阅。
+> 本文件汇总当前项目主要源码、账号隔离逻辑、云端部署配置和运行文档。
 
 ## 1. requirements.txt
 
@@ -623,7 +623,7 @@ app = create_app()
 if __name__ == "__main__":
     # 云平台通常会注入 PORT；本地默认仍使用 5000。
     server_port = int(os.getenv("PORT", "5000"))
-    # 监听 0.0.0.0 便于本机、局域网和容器环境访问；比赛演示关闭 debug。
+    # 监听 0.0.0.0 便于本机、局域网和容器环境访问；生产环境关闭 debug。
     app.run(host="0.0.0.0", port=server_port, debug=False)
 ````
 
@@ -2791,7 +2791,7 @@ __all__ = ["CAMPUS_MERCHANTS", "LIFE_MERCHANTS"]
 - tags：用于辅助决策的特征标签；
 - business_hours：营业时间。
 
-该文件仅用于基础框架演示，不包含真实用户或商户隐私数据。
+该文件仅用于基础功能体验，不包含真实用户或商户隐私数据。
 """
 
 from typing import Any, Dict, Tuple
@@ -4593,9 +4593,151 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
       width: 42px; height: 42px; border: 3px solid #dbeafe; border-top-color: #2563eb;
       border-radius: 999px; animation: spin 800ms linear infinite;
     }
+    /* 登录与账号隔离 */
+    #auth-gate { display: none; }
+    body.auth-locked { overflow: hidden; }
+    body.auth-locked > header,
+    body.auth-locked > main,
+    body.auth-locked > footer,
+    body.auth-locked > #project-intro-modal,
+    body.auth-locked > #page-loader,
+    body.auth-locked > #toast-container { display: none !important; }
+    body.auth-locked #auth-gate { display: block; }
+    .auth-shell {
+      background:
+        radial-gradient(circle at 15% 20%, rgba(37, 99, 235, 0.28), transparent 34%),
+        radial-gradient(circle at 85% 78%, rgba(13, 148, 136, 0.22), transparent 32%),
+        linear-gradient(145deg, #020617 0%, #0f172a 48%, #111827 100%);
+    }
+    .auth-card {
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 30px 80px rgba(2, 6, 23, 0.36);
+    }
+    .auth-input {
+      width: 100%; border: 1px solid #dbe3ef; border-radius: 0.85rem;
+      background: #f8fafc; padding: 0.8rem 0.9rem; color: #334155;
+      font-size: 0.875rem; outline: none; transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+    .auth-input:focus { border-color: #60a5fa; background: #fff; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+    .auth-tab { color: #64748b; transition: all 160ms ease; }
+    .auth-tab.active { color: #1d4ed8; background: #fff; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.09); }
+    .auth-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff;
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.24); transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+    .auth-primary:hover { transform: translateY(-1px); box-shadow: 0 16px 32px rgba(37, 99, 235, 0.3); }
+    .auth-primary:disabled { cursor: wait; opacity: 0.65; transform: none; }
   </style>
 </head>
-<body class="min-h-screen antialiased">
+<body class="min-h-screen antialiased auth-locked">
+  <!-- ==================== 登录 / 注册 ==================== -->
+  <div id="auth-gate" class="fixed inset-0 z-[140] overflow-y-auto" role="main" aria-labelledby="auth-title">
+    <div class="auth-shell flex min-h-full items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+      <div class="grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-2xl shadow-black/40 lg:grid-cols-[1.05fr_0.95fr]">
+        <section class="hidden flex-col justify-between p-10 text-white lg:flex xl:p-14">
+          <div>
+            <div class="flex items-center gap-3">
+              <div class="grid h-12 w-12 place-items-center rounded-2xl bg-blue-500 text-white shadow-lg shadow-blue-500/30">
+                <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75 5.1 20.1a.6.6 0 0 1-.82-.68l.65-3.25A8.25 8.25 0 1 1 8.25 18.75Z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 9.75h7M8.5 13.25h4.5" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-300">Life Wallet AI</p>
+                <p class="text-lg font-black">全场景生活消费决策智能体</p>
+              </div>
+            </div>
+            <h1 class="mt-12 max-w-lg text-4xl font-black leading-tight tracking-tight xl:text-5xl">让每一笔消费<br />都有迹可循</h1>
+            <p class="mt-5 max-w-md text-sm leading-7 text-slate-300">登录后即可使用智能咨询、周期预算、消费记录和复盘分析。每个账号拥有独立的预算与消费数据空间。</p>
+          </div>
+          <div class="mt-12 grid gap-3 sm:grid-cols-2">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="text-xs font-bold text-blue-200">账号数据隔离</p>
+              <p class="mt-1 text-xs leading-5 text-slate-400">不同账号的预算、消费与对话分别保存。</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="text-xs font-bold text-cyan-200">退出不丢数据</p>
+              <p class="mt-1 text-xs leading-5 text-slate-400">退出后再次登录，个人数据保持原样。</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="text-xs font-bold text-emerald-200">周期复盘</p>
+              <p class="mt-1 text-xs leading-5 text-slate-400">按月、按周查看历史预算与消费结构。</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="text-xs font-bold text-amber-200">本地安全存储</p>
+              <p class="mt-1 text-xs leading-5 text-slate-400">密码以加盐哈希保存，不保存明文密码。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="flex items-center justify-center bg-slate-50 p-4 sm:p-8 lg:p-10">
+          <div class="auth-card w-full max-w-md rounded-3xl p-6 sm:p-8">
+            <div class="mb-6 flex items-center gap-3 lg:hidden">
+              <div class="grid h-10 w-10 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75 5.1 20.1a.6.6 0 0 1-.82-.68l.65-3.25A8.25 8.25 0 1 1 8.25 18.75Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 9.75h7M8.5 13.25h4.5" /></svg>
+              </div>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-500">Life Wallet AI</p>
+                <p class="text-sm font-black text-slate-900">全场景生活消费决策智能体</p>
+              </div>
+            </div>
+
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">Account Access</p>
+            <h2 id="auth-title" class="mt-2 text-2xl font-black tracking-tight text-slate-900">登录后开始使用</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-500">账号与个人数据保存在当前浏览器中，请使用自己的账号登录。</p>
+
+            <div class="mt-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="登录或注册">
+              <button id="auth-login-tab" type="button" class="auth-tab active rounded-lg px-3 py-2 text-sm font-bold" role="tab" aria-selected="true" data-auth-mode="login">登录</button>
+              <button id="auth-register-tab" type="button" class="auth-tab rounded-lg px-3 py-2 text-sm font-bold" role="tab" aria-selected="false" data-auth-mode="register">注册</button>
+            </div>
+
+            <form id="login-form" class="mt-5 space-y-4" novalidate>
+              <div>
+                <label for="login-account" class="text-xs font-semibold text-slate-500">邮箱</label>
+                <input id="login-account" type="email" required autocomplete="username" class="auth-input mt-1.5" placeholder="请输入注册邮箱" />
+              </div>
+              <div>
+                <label for="login-password" class="text-xs font-semibold text-slate-500">密码</label>
+                <input id="login-password" type="password" required autocomplete="current-password" class="auth-input mt-1.5" placeholder="请输入密码" />
+              </div>
+              <p id="login-error" class="hidden rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold leading-5 text-red-600" role="alert"></p>
+              <button id="login-submit" type="submit" class="auth-primary w-full rounded-xl px-4 py-3 text-sm font-bold">登录</button>
+            </form>
+
+            <form id="register-form" class="mt-5 hidden space-y-4" novalidate>
+              <div>
+                <label for="register-name" class="text-xs font-semibold text-slate-500">昵称</label>
+                <input id="register-name" type="text" required maxlength="20" autocomplete="nickname" class="auth-input mt-1.5" placeholder="例如：小林" />
+              </div>
+              <div>
+                <label for="register-email" class="text-xs font-semibold text-slate-500">邮箱</label>
+                <input id="register-email" type="email" required autocomplete="email" class="auth-input mt-1.5" placeholder="用于登录，不会公开" />
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label for="register-password" class="text-xs font-semibold text-slate-500">密码</label>
+                  <input id="register-password" type="password" required minlength="6" autocomplete="new-password" class="auth-input mt-1.5" placeholder="至少 6 位" />
+                </div>
+                <div>
+                  <label for="register-confirm" class="text-xs font-semibold text-slate-500">确认密码</label>
+                  <input id="register-confirm" type="password" required minlength="6" autocomplete="new-password" class="auth-input mt-1.5" placeholder="再次输入" />
+                </div>
+              </div>
+              <p id="register-error" class="hidden rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold leading-5 text-red-600" role="alert"></p>
+              <button id="register-submit" type="submit" class="auth-primary w-full rounded-xl px-4 py-3 text-sm font-bold">创建账号并登录</button>
+            </form>
+
+            <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+              <p class="text-[11px] leading-5 text-slate-400">账号及个人数据仅存储在当前浏览器。退出登录不会删除账号、预算、消费记录或复盘数据；清除浏览器站点数据会同时清除本机账号。</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+
   <!-- 首屏加载动画：应用初始化完成后淡出 -->
   <div id="page-loader" class="page-loader" role="status" aria-live="polite">
     <div class="text-center">
@@ -4627,11 +4769,15 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         <button type="button" class="nav-tab active inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4" data-page="chat">智能咨询</button>
         <button type="button" class="nav-tab inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4" data-page="budget">预算管理</button>
         <button type="button" class="nav-tab inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4" data-page="review">消费复盘</button>
-        <button id="project-intro-button" type="button" class="ml-1 whitespace-nowrap rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">作品介绍</button>
+        <button id="project-intro-button" type="button" class="ml-1 whitespace-nowrap rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">项目介绍</button>
         <button id="share-project-button" type="button" class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100" title="复制项目网址">
           <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 12.75 7.5 13.5a3.18 3.18 0 0 1-4.5-4.5l3-3a3.18 3.18 0 0 1 4.5 0m5.25 5.25.75-.75a3.18 3.18 0 0 1 4.5 4.5l-3 3a3.18 3.18 0 0 1-4.5 0M8.25 15.75l7.5-7.5" /></svg>
-+          <span>分享网址</span>
-+        </button>
+          <span>分享网址</span>
+        </button>
+        <div class="ml-1 flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1.5">
+          <span id="current-user-name" class="max-w-[90px] truncate px-1 text-xs font-bold text-slate-700">账号</span>
+          <button id="logout-button" type="button" class="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-400 transition hover:bg-red-50 hover:text-red-500">退出</button>
+        </div>
       </nav>
     </div>
   </header>
@@ -4688,7 +4834,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
                 <input id="api-base-url" type="url" class="min-w-0 flex-1 rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-400" value="" placeholder="自动使用当前网站地址" />
                 <button id="save-api-url" type="button" class="rounded-xl bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">保存</button>
               </div>
-              <p id="api-mode-hint" class="mt-2 text-[11px] leading-5 text-blue-600/80">通过网址访问时自动使用当前网站的同源后端；直接打开本地文件时使用本地演示模式。</p>
+              <p id="api-mode-hint" class="mt-2 text-[11px] leading-5 text-blue-600/80">通过网址访问时自动使用当前网站的同源后端；直接打开本地文件时使用本地智能模式。</p>
             </div>
           </div>
 
@@ -4799,7 +4945,6 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
           <p class="mt-2 text-sm leading-6 text-slate-500">按月度或周度管理预算，可回看历史周期，逐期查看预算、支出和消费明细。</p>
         </div>
         <div class="flex gap-2">
-          <button id="seed-expenses" type="button" class="rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100">载入示例记录</button>
           <button id="clear-expenses" type="button" class="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600">清空记录</button>
         </div>
       </div>
@@ -4854,7 +4999,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
               <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 7.5A2.25 2.25 0 0 1 6.75 5.25h10.5A2.25 2.25 0 0 1 19.5 7.5v9A2.25 2.25 0 0 1 17.25 18.75H6.75a2.25 2.25 0 0 1-2.25-2.25v-9Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5h3.75v3h-3.75a1.5 1.5 0 0 1 0-3Z" /></svg>
             </span>
           </div>
-          <p id="budget-total" class="mt-4 text-3xl font-black tracking-tight text-slate-900">¥6,000.00</p>
+          <p id="budget-total" class="mt-4 text-3xl font-black tracking-tight text-slate-900">未设置</p>
           <p id="budget-card-hint" class="mt-1 text-xs text-slate-400">每个周期可单独设置预算</p>
         </div>
         <div class="soft-card rounded-2xl p-5">
@@ -4874,13 +5019,13 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
               <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m3.75-9.75a3 3 0 0 0-3-2.25h-1.5a2.25 2.25 0 0 0 0 4.5h1.5a2.25 2.25 0 0 1 0 4.5h-1.5a3 3 0 0 1-3-2.25" /></svg>
             </span>
           </div>
-          <p id="budget-remaining" class="mt-4 text-3xl font-black tracking-tight text-slate-900">¥6,000.00</p>
+          <p id="budget-remaining" class="mt-4 text-3xl font-black tracking-tight text-slate-900">—</p>
           <p id="budget-status" class="mt-1 text-xs text-emerald-600">额度充足</p>
         </div>
         <div class="soft-card rounded-2xl p-5">
           <div class="flex items-center justify-between">
             <p class="text-sm font-semibold text-slate-500">预算使用率</p>
-            <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700" id="budget-percent">0%</span>
+            <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700" id="budget-percent">—</span>
           </div>
           <div class="mt-5 h-2.5 overflow-hidden rounded-full bg-slate-100">
             <div id="budget-progress" class="budget-progress h-full rounded-full bg-blue-500" style="width: 0%"></div>
@@ -5077,13 +5222,13 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
               <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3.75 4.5 7.5v4.75c0 4.4 3.05 7.15 7.5 8 4.45-.85 7.5-3.6 7.5-8V7.5L12 3.75Z" /><path stroke-linecap="round" stroke-linejoin="round" d="m9 12 2 2 4-4" /></svg>
             </div>
             <div>
-              <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-500">Competition Showcase</p>
+              <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-500">Project Overview</p>
               <h2 class="text-lg font-black text-slate-900">作品说明</h2>
             </div>
           </div>
-          <p class="mt-4 text-sm leading-7 text-slate-500">全场景生活消费决策智能体面向全国人工智能应用创新大赛演示场景，以真实生活消费问题为牵引，展示大模型在需求理解、工具调用、跨平台比价和预算规划中的综合应用能力。</p>
+          <p class="mt-4 text-sm leading-7 text-slate-500">全场景生活消费决策智能体围绕真实生活中的消费决策问题，联动自然语言理解、工具调用、跨平台比价和预算规划，为个人与家庭提供可解释、可执行、可复盘的消费建议。</p>
           <div class="mt-4 flex flex-wrap gap-2">
-            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600">全国人工智能应用创新大赛</span>
+            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600">生活消费决策</span>
             <span class="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-700">AI Agent 应用</span>
             <span class="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">全生活消费场景</span>
           </div>
@@ -5105,7 +5250,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         </div>
       </div>
       <div class="mt-6 flex flex-col justify-between gap-2 border-t border-slate-100 pt-4 text-[11px] text-slate-400 sm:flex-row">
-        <p>本作品中的商品、价格、优惠与消费记录均为演示模拟数据。</p>
+        <p>本项目中的商品、价格、优惠与消费记录均为模拟数据，仅用于功能体验。</p>
         <p>全场景生活消费决策智能体 · 2026</p>
       </div>
     </div>
@@ -5118,7 +5263,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
       <div class="project-modal-dialog relative max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-white/80 bg-white shadow-2xl shadow-slate-950/25">
         <div class="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur-xl sm:px-7">
           <div>
-            <p class="text-[10px] font-bold uppercase tracking-[0.24em] text-blue-500">National AI Application Innovation Competition</p>
+            <p class="text-[10px] font-bold uppercase tracking-[0.24em] text-blue-500">Personal Finance & Life Consumption</p>
             <h2 id="project-intro-title" class="mt-1 text-xl font-black tracking-tight text-slate-900 sm:text-2xl">全场景生活消费决策智能体</h2>
           </div>
           <button id="project-intro-close" type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-xl text-slate-500 transition hover:bg-slate-200 hover:text-slate-800" aria-label="关闭项目介绍">×</button>
@@ -5131,7 +5276,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
                 <p class="text-xs font-bold text-blue-700">面向真实全生活消费场景的 AI Agent 应用</p>
                 <p class="mt-1 text-sm leading-6 text-slate-600">通过自然语言交互，联动商品检索、优惠计算与预算管理工具，为个人和家庭提供可解释、可执行、可复盘的消费决策支持。</p>
               </div>
-              <span class="self-start rounded-full bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white sm:self-auto">比赛演示版</span>
+              <span class="self-start rounded-full bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white sm:self-auto">账号数据版</span>
             </div>
           </div>
 
@@ -5173,15 +5318,15 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
                 <span class="grid h-8 w-8 place-items-center rounded-xl bg-violet-100 text-sm font-black text-violet-700">04</span>
                 <h3 class="font-bold text-slate-900">适用人群</h3>
               </div>
-              <p class="mt-3 text-sm leading-6 text-slate-500">面向个人消费者、家庭采购者、通勤上班族、旅行与本地生活用户，以及关注智能消费决策应用的研究与评审人员。</p>
+              <p class="mt-3 text-sm leading-6 text-slate-500">面向个人消费者、家庭采购者、通勤上班族、旅行与本地生活用户，以及需要管理个人消费数据的普通用户。</p>
             </section>
           </div>
 
           <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-xs leading-5 text-slate-400">演示数据均为模拟内容，可随时通过预算管理页编辑或清空。</p>
+            <p class="text-xs leading-5 text-slate-400">账号、预算、消费和对话数据分别保存在当前浏览器中，退出登录不会删除个人数据。</p>
             <div class="flex gap-2">
-              <button id="intro-view-scenarios" type="button" class="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-50">查看典型场景</button>
-              <button id="intro-start-demo" type="button" class="primary-button rounded-xl px-5 py-2.5 text-sm font-bold text-white">开始体验</button>
+              <button id="intro-view-scenarios" type="button" class="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-50">查看常用场景</button>
+              <button id="intro-start-app" type="button" class="primary-button rounded-xl px-5 py-2.5 text-sm font-bold text-white">开始体验</button>
             </div>
           </div>
         </div>
@@ -5189,7 +5334,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
     </div>
   </div>
 
-  <script id="local-demo-data" type="application/json">{"products":[{"id":"D001","name":"入耳式有线耳机","category":"数码配件","price":29.9,"platform":"淘宝","rating":4.5,"tags":["耳机","有线","高性价比"],"description":"带麦克风线控，适合线上会议和日常听歌。"},{"id":"D002","name":"真无线蓝牙耳机","category":"数码配件","price":89.0,"platform":"拼多多","rating":4.4,"tags":["耳机","蓝牙","通勤"],"description":"半入耳设计，续航约20小时，适合居家和通勤使用。"},{"id":"D003","name":"32GB USB3.0 U盘","category":"数码配件","price":24.9,"platform":"京东","rating":4.7,"tags":["U盘","存储","学习资料"],"description":"读取速度快，适合保存工作文件、学习资料和打印资料。"},{"id":"D004","name":"10000mAh充电宝","category":"数码配件","price":79.0,"platform":"淘宝","rating":4.6,"tags":["充电宝","便携","居家"],"description":"双向快充，机身轻便，适合办公室和短途出行。"},{"id":"D005","name":"Type-C快充数据线1.5米","category":"数码配件","price":12.9,"platform":"拼多多","rating":4.5,"tags":["数据线","快充","手机配件"],"description":"加长编织线身，支持常见安卓手机和轻薄本充电。"},{"id":"D006","name":"桌面手机支架","category":"数码配件","price":9.9,"platform":"淘宝","rating":4.4,"tags":["手机支架","桌面","线上会议"],"description":"可调节角度，适合居家追剧、线上会议和视频通话。"},{"id":"D007","name":"无线静音鼠标","category":"数码配件","price":39.9,"platform":"京东","rating":4.6,"tags":["鼠标","无线","静音"],"description":"静音按键设计，适合办公室和居家学习使用。"},{"id":"D008","name":"便携蓝牙键盘","category":"数码配件","price":69.0,"platform":"拼多多","rating":4.3,"tags":["键盘","蓝牙","便携"],"description":"紧凑布局，可连接手机和平板，适合移动记笔记。"},{"id":"D009","name":"主动降噪蓝牙耳机","category":"数码配件","price":149.0,"platform":"京东","rating":4.7,"tags":["耳机","降噪","专注"],"description":"支持主动降噪和通透模式，适合居家、通勤和安静办公环境。"},{"id":"D010","name":"轻量半入耳蓝牙耳机","category":"数码配件","price":59.9,"platform":"拼多多","rating":4.2,"tags":["耳机","蓝牙","轻量","高性价比"],"description":"轻量半入耳设计，支持蓝牙连接，适合预算有限的日常听歌和线上会议。"},{"id":"D011","name":"运动蓝牙耳机","category":"数码配件","price":95.0,"platform":"淘宝","rating":4.5,"tags":["耳机","蓝牙","运动","防汗"],"description":"挂耳式运动设计，支持蓝牙连接和防汗，适合跑步、通勤和学习使用。"},{"id":"B001","name":"氨基酸洗面奶","category":"美妆个护","price":29.9,"platform":"淘宝","rating":4.6,"tags":["洗面奶","温和","清洁"],"description":"温和清洁不紧绷，适合日常早晚洁面。"},{"id":"B002","name":"补水保湿面膜10片","category":"美妆个护","price":39.9,"platform":"拼多多","rating":4.4,"tags":["面膜","补水","护肤"],"description":"轻薄服帖，适合换季补水和熬夜后基础护理。"},{"id":"B003","name":"滋润口红","category":"美妆个护","price":49.9,"platform":"京东","rating":4.5,"tags":["口红","彩妆","日常"],"description":"日常显色色号，滋润不拔干，适合通勤和聚会活动。"},{"id":"B004","name":"清爽防晒霜SPF50","category":"美妆个护","price":59.9,"platform":"淘宝","rating":4.6,"tags":["防晒","清爽","户外活动"],"description":"清爽易推开，适合户外活动、运动和日常通勤。"},{"id":"B005","name":"去屑洗发水500ml","category":"美妆个护","price":32.9,"platform":"拼多多","rating":4.4,"tags":["洗发水","去屑","大容量"],"description":"清洁头皮并减少头屑，大容量适合家庭长期使用。"},{"id":"B006","name":"清香沐浴露500ml","category":"美妆个护","price":27.9,"platform":"京东","rating":4.5,"tags":["沐浴露","清香","洗护"],"description":"泡沫细腻易冲洗，适合日常洗护。"},{"id":"B007","name":"保湿护手霜","category":"美妆个护","price":15.9,"platform":"淘宝","rating":4.6,"tags":["护手霜","保湿","便携"],"description":"小支便携，适合秋冬季节随身补涂。"},{"id":"B008","name":"温和卸妆水300ml","category":"美妆个护","price":35.9,"platform":"拼多多","rating":4.3,"tags":["卸妆水","温和","彩妆"],"description":"可卸除日常防晒和淡妆，使用后不黏腻。"},{"id":"B009","name":"新手基础彩妆套装","category":"美妆个护","price":79.9,"platform":"京东","rating":4.2,"tags":["彩妆","套装","新手"],"description":"包含底妆和基础眼妆用品，适合新手聚会活动使用。"},{"id":"S001","name":"红烧牛肉泡面5连包","category":"零食饮料","price":19.9,"platform":"拼多多","rating":4.7,"tags":["泡面","速食","夜宵"],"description":"经典口味五连包，适合居家夜宵和应急加餐。"},{"id":"S002","name":"纯牛奶250ml×12盒","category":"零食饮料","price":39.9,"platform":"京东","rating":4.8,"tags":["牛奶","早餐","整箱"],"description":"整箱装常温纯牛奶，适合早餐和日常补充蛋白质。"},{"id":"S003","name":"原味薯片3连包","category":"零食饮料","price":15.9,"platform":"淘宝","rating":4.4,"tags":["薯片","零食","分享"],"description":"小包装组合，适合居家追剧和朋友分享。"},{"id":"S004","name":"早餐饼干2斤","category":"零食饮料","price":12.9,"platform":"拼多多","rating":4.3,"tags":["饼干","早餐","囤货"],"description":"独立小包方便携带，适合早八赶课和课间加餐。"},{"id":"S005","name":"即食燕麦片1kg","category":"零食饮料","price":25.9,"platform":"京东","rating":4.6,"tags":["燕麦","早餐","健康"],"description":"热水冲泡即可食用，适合居家早餐和轻食搭配。"},{"id":"S006","name":"矿泉水550ml×24瓶","category":"零食饮料","price":24.9,"platform":"淘宝","rating":4.5,"tags":["矿泉水","整箱","居家"],"description":"整箱饮用水，适合居家、户外活动和聚会活动储备。"},{"id":"S007","name":"无糖乌龙茶500ml×6瓶","category":"零食饮料","price":19.9,"platform":"拼多多","rating":4.4,"tags":["茶饮","无糖","解腻"],"description":"无糖茶饮组合装，适合通勤和聚餐后饮用。"},{"id":"S008","name":"每日坚果20小包","category":"零食饮料","price":29.9,"platform":"京东","rating":4.6,"tags":["坚果","健康","课间"],"description":"独立小包装，方便课间补充能量和控制食用量。"},{"id":"S009","name":"辣条混合装20包","category":"零食饮料","price":9.9,"platform":"淘宝","rating":4.3,"tags":["辣条","零食","居家"],"description":"多种口味混合装，适合居家分享和休闲零食储备。"},{"id":"L001","name":"抽纸3层24包","category":"生活用品","price":29.9,"platform":"拼多多","rating":4.7,"tags":["纸巾","抽纸","居家囤货"],"description":"原生木浆抽纸整箱装，适合家庭长期使用。"},{"id":"L002","name":"洗衣液2kg","category":"生活用品","price":24.9,"platform":"京东","rating":4.6,"tags":["洗衣液","清洁","大容量"],"description":"低泡易漂洗，适合手洗和居家公共洗衣机。"},{"id":"L003","name":"晴雨两用折叠伞","category":"生活用品","price":19.9,"platform":"淘宝","rating":4.4,"tags":["雨伞","防晒","便携"],"description":"轻量折叠设计，晴天防晒、雨天挡雨，适合随身携带。"},{"id":"L004","name":"软毛牙刷牙膏套装","category":"生活用品","price":16.9,"platform":"拼多多","rating":4.5,"tags":["牙刷","牙膏","洗漱"],"description":"软毛牙刷搭配牙膏，满足居家日常洗漱需求。"},{"id":"L005","name":"纯棉毛巾3条装","category":"生活用品","price":19.9,"platform":"淘宝","rating":4.4,"tags":["毛巾","纯棉","居家"],"description":"吸水柔软的纯棉毛巾，三条装方便换洗。"},{"id":"L006","name":"桌面收纳盒","category":"生活用品","price":14.9,"platform":"拼多多","rating":4.3,"tags":["收纳","桌面","居家"],"description":"分区收纳文具和杂物，让居家桌面更整洁。"},{"id":"L007","name":"防滑衣架20个","category":"生活用品","price":12.9,"platform":"淘宝","rating":4.4,"tags":["衣架","防滑","居家"],"description":"轻薄防滑设计，适合居家衣柜和晾晒衣物。"},{"id":"L008","name":"居家小垃圾桶","category":"生活用品","price":15.9,"platform":"京东","rating":4.5,"tags":["垃圾桶","桌面","居家"],"description":"带盖小容量垃圾桶，适合书桌旁和居家床位使用。"},{"id":"L009","name":"不锈钢保温杯","category":"生活用品","price":39.9,"platform":"淘宝","rating":4.7,"tags":["保温杯","水杯","通勤"],"description":"长效保温保冷，容量适中，适合通勤和专注携带。"},{"id":"G001","name":"简约定制笔记本","category":"礼品文创","price":9.9,"platform":"拼多多","rating":4.6,"tags":["笔记本","学习","文创"],"description":"简约主题封面，内页顺滑，适合课堂记录和送礼。"},{"id":"G002","name":"商务钢笔礼盒","category":"礼品文创","price":39.9,"platform":"淘宝","rating":4.5,"tags":["钢笔","礼盒","生日礼物"],"description":"含钢笔、墨囊和包装盒，适合生日或毕业赠礼。"},{"id":"G003","name":"桌面励志摆件","category":"礼品文创","price":19.9,"platform":"拼多多","rating":4.3,"tags":["摆件","桌面","礼物"],"description":"小巧桌面装饰，适合送给朋友或布置书桌。"},{"id":"G004","name":"文创帆布包","category":"礼品文创","price":29.9,"platform":"淘宝","rating":4.6,"tags":["帆布包","实用","文创"],"description":"大容量帆布托特包，适合通勤、购物和日常出行。"},{"id":"G005","name":"复古手账套装","category":"礼品文创","price":35.9,"platform":"京东","rating":4.7,"tags":["手账","文具","礼物"],"description":"含手账本、贴纸和胶带，适合记录日常生活和送礼。"},{"id":"G006","name":"古风书签礼盒","category":"礼品文创","price":15.9,"platform":"淘宝","rating":4.5,"tags":["书签","礼盒","文创"],"description":"多款古风书签组合，适合读书爱好者和小型伴手礼。"},{"id":"G007","name":"香薰蜡烛礼盒","category":"礼品文创","price":49.9,"platform":"拼多多","rating":4.4,"tags":["香薰","蜡烛","生日礼物"],"description":"淡香型香薰蜡烛组合，适合居家氛围布置和生日赠礼。"},{"id":"G008","name":"定制照片相框","category":"礼品文创","price":29.9,"platform":"京东","rating":4.6,"tags":["相框","定制","纪念礼物"],"description":"可放入生活合照或生活照片，适合纪念日和毕业礼物。"},{"id":"G009","name":"毕业纪念册","category":"礼品文创","price":59.9,"platform":"淘宝","rating":4.8,"tags":["纪念册","毕业","礼物"],"description":"可书写留言的纪念册，适合集体纪念和毕业留念。"},{"id":"F001","name":"双人火锅套餐","category":"餐饮美食","price":158.0,"platform":"美团","rating":4.7,"tags":["火锅","双人餐","周末聚餐"],"description":"含锅底、荤素拼盘和饮品，适合朋友或情侣聚餐。"},{"id":"F002","name":"家庭披萨套餐","category":"餐饮美食","price":99.0,"platform":"饿了么","rating":4.5,"tags":["披萨","家庭餐","外卖"],"description":"含大份披萨、小食和饮料，适合家庭简餐或朋友分享。"},{"id":"F003","name":"工作日轻食午餐券","category":"餐饮美食","price":29.9,"platform":"美团","rating":4.6,"tags":["午餐","轻食","工作餐"],"description":"可选沙拉、鸡胸肉和谷物饭，适合工作日快速用餐。"},{"id":"F004","name":"咖啡饮品兑换券","category":"餐饮美食","price":19.9,"platform":"美团","rating":4.5,"tags":["咖啡","饮品","下午茶"],"description":"可用于指定咖啡或茶饮，适合通勤和下午茶场景。"},{"id":"F005","name":"生鲜蔬菜周套餐","category":"餐饮美食","price":69.0,"platform":"京东到家","rating":4.4,"tags":["生鲜","蔬菜","家庭采购"],"description":"包含多种当季蔬菜，适合家庭一周基础食材补充。"},{"id":"F006","name":"家庭米面粮油组合","category":"餐饮美食","price":129.0,"platform":"京东","rating":4.7,"tags":["粮油","家庭采购","囤货"],"description":"大米、面粉和食用油基础组合，适合家庭日常储备。"},{"id":"W001","name":"基础纯棉T恤","category":"服饰鞋包","price":59.9,"platform":"淘宝","rating":4.5,"tags":["T恤","纯棉","日常穿搭"],"description":"版型简洁，适合通勤、休闲和叠穿。"},{"id":"W002","name":"通勤双肩包","category":"服饰鞋包","price":129.0,"platform":"京东","rating":4.6,"tags":["双肩包","通勤","电脑包"],"description":"带独立电脑隔层，适合上班、短途出行和日常使用。"},{"id":"W003","name":"轻量运动鞋","category":"服饰鞋包","price":199.0,"platform":"拼多多","rating":4.4,"tags":["运动鞋","轻量","跑步"],"description":"缓震鞋底和透气鞋面，适合日常步行与轻度运动。"},{"id":"W004","name":"保暖针织外套","category":"服饰鞋包","price":159.0,"platform":"淘宝","rating":4.5,"tags":["外套","保暖","秋冬"],"description":"柔软针织面料，适合换季通勤和日常外搭。"},{"id":"W005","name":"居家防滑拖鞋","category":"服饰鞋包","price":29.9,"platform":"拼多多","rating":4.3,"tags":["拖鞋","防滑","居家"],"description":"轻便防滑，适合家庭日常和浴室使用。"},{"id":"A001","name":"迷你电饭煲","category":"数码家电","price":159.0,"platform":"京东","rating":4.6,"tags":["电饭煲","小家电","租房"],"description":"小容量多功能设计，适合独居、租房和小家庭使用。"},{"id":"A002","name":"家用空气炸锅","category":"数码家电","price":199.0,"platform":"拼多多","rating":4.5,"tags":["空气炸锅","厨房电器","家庭"],"description":"操作简单，适合日常快手烹饪和家庭加餐。"},{"id":"A003","name":"便携蓝牙音箱","category":"数码家电","price":99.0,"platform":"淘宝","rating":4.4,"tags":["音箱","蓝牙","户外"],"description":"小巧便携，适合居家听歌、露营和短途出游。"},{"id":"A004","name":"手持挂烫机","category":"数码家电","price":129.0,"platform":"京东","rating":4.5,"tags":["挂烫机","衣物护理","通勤"],"description":"快速预热，适合通勤衣物除皱和日常护理。"},{"id":"J001","name":"多功能不粘锅","category":"家居生活","price":129.0,"platform":"京东","rating":4.6,"tags":["锅具","厨房","租房"],"description":"煎炒煮一体，适合独居和家庭日常烹饪。"},{"id":"J002","name":"家用保温电热水壶","category":"家居生活","price":79.9,"platform":"淘宝","rating":4.5,"tags":["电热水壶","厨房","保温"],"description":"自动断电和保温功能，满足家庭日常饮水需求。"},{"id":"J003","name":"全棉四件套","category":"家居生活","price":199.0,"platform":"拼多多","rating":4.5,"tags":["床品","四件套","换新"],"description":"亲肤棉质面料，适合卧室换季和乔迁布置。"},{"id":"J004","name":"折叠收纳柜","category":"家居生活","price":89.0,"platform":"京东","rating":4.4,"tags":["收纳","储物","租房"],"description":"多层折叠结构，适合小户型、租房和杂物整理。"},{"id":"J005","name":"家用净水壶","category":"家居生活","price":99.0,"platform":"淘宝","rating":4.5,"tags":["净水壶","饮水","家庭"],"description":"过滤水垢和杂质，适合租房及家庭日常饮水。"},{"id":"X001","name":"电子体温计","category":"健康医疗","price":29.9,"platform":"京东","rating":4.7,"tags":["体温计","健康监测","家庭"],"description":"快速测温，适合家庭日常健康监测。"},{"id":"X002","name":"家庭急救包","category":"健康医疗","price":49.9,"platform":"淘宝","rating":4.6,"tags":["急救","家庭","常备"],"description":"含基础消毒、包扎和固定用品，适合家庭应急储备。"},{"id":"X003","name":"复合维生素60片","category":"健康医疗","price":69.0,"platform":"京东","rating":4.5,"tags":["维生素","营养","日常补充"],"description":"日常营养补充产品，使用前请按说明并结合个人情况选择。"},{"id":"X004","name":"医用外科口罩50只","category":"健康医疗","price":24.9,"platform":"拼多多","rating":4.7,"tags":["口罩","防护","家庭"],"description":"独立包装，适合家庭日常防护和出行备用。"},{"id":"X005","name":"颈椎热敷贴","category":"健康医疗","price":39.9,"platform":"淘宝","rating":4.4,"tags":["热敷","颈肩","居家护理"],"description":"温热敷贴，适合久坐后居家放松，不替代医疗诊疗。"},{"id":"T001","name":"共享单车月卡","category":"交通出行","price":16.8,"platform":"美团","rating":4.6,"tags":["单车","月卡","通勤"],"description":"适合短距离通勤和接驳，使用范围以平台规则为准。"},{"id":"T002","name":"地铁10次乘车券","category":"交通出行","price":30.0,"platform":"支付宝","rating":4.7,"tags":["地铁","通勤","乘车券"],"description":"适合日常通勤，覆盖城市地铁基础出行需求。"},{"id":"T003","name":"网约车20元券包","category":"交通出行","price":15.9,"platform":"滴滴出行","rating":4.3,"tags":["打车","优惠券","出行"],"description":"含多张小额打车券，适合雨天、夜间和赶时间出行。"},{"id":"T004","name":"加油200元券包","category":"交通出行","price":189.0,"platform":"易捷","rating":4.5,"tags":["加油","自驾","用车"],"description":"适合自驾通勤和家庭用车，具体适用站点以平台为准。"},{"id":"E001","name":"在线课程月卡","category":"教育学习","price":99.0,"platform":"京东","rating":4.4,"tags":["在线课程","技能提升","学习"],"description":"可学习平台指定课程，适合职业技能和兴趣提升。"},{"id":"E002","name":"电子书平台月卡","category":"教育学习","price":25.0,"platform":"淘宝","rating":4.6,"tags":["电子书","阅读","会员"],"description":"适合日常阅读和知识拓展，具体书库以平台说明为准。"},{"id":"E003","name":"A4打印纸500张","category":"教育学习","price":24.9,"platform":"京东","rating":4.7,"tags":["打印纸","办公","居家学习"],"description":"适合家庭打印、办公资料和孩子作业使用。"},{"id":"E004","name":"英语口语练习课程","category":"教育学习","price":129.0,"platform":"拼多多","rating":4.3,"tags":["英语","口语","课程"],"description":"包含情景练习和发音训练，适合业余时间自主学习。"},{"id":"R001","name":"电影双人票","category":"文体娱乐","price":79.9,"platform":"美团","rating":4.6,"tags":["电影","双人","约会"],"description":"适合情侣、朋友或家人周末观影，具体影院以平台为准。"},{"id":"R002","name":"健身房月卡","category":"文体娱乐","price":199.0,"platform":"美团","rating":4.4,"tags":["健身","月卡","运动"],"description":"可在指定门店使用，适合建立短期运动习惯。"},{"id":"R003","name":"家庭桌游套装","category":"文体娱乐","price":89.0,"platform":"淘宝","rating":4.7,"tags":["桌游","家庭","聚会"],"description":"适合家庭聚会和朋友互动，包含多种基础玩法。"},{"id":"R004","name":"城市博物馆通票","category":"文体娱乐","price":60.0,"platform":"携程","rating":4.8,"tags":["博物馆","城市游","文化"],"description":"覆盖多个合作场馆，适合周末城市文化游览。"},{"id":"P001","name":"全价猫粮2kg","category":"亲子宠物","price":89.0,"platform":"京东","rating":4.6,"tags":["猫粮","宠物","囤货"],"description":"适合成年猫日常喂养，换粮时请循序渐进。"},{"id":"P002","name":"豆腐猫砂10L","category":"亲子宠物","price":39.9,"platform":"拼多多","rating":4.5,"tags":["猫砂","宠物","清洁"],"description":"结团和吸味表现稳定，适合猫咪家庭日常清洁。"},{"id":"P003","name":"宠物互动玩具","category":"亲子宠物","price":29.9,"platform":"淘宝","rating":4.4,"tags":["宠物玩具","互动","猫狗"],"description":"适合日常陪伴和互动，使用时请注意宠物安全。"},{"id":"P004","name":"儿童益智积木","category":"亲子宠物","price":79.0,"platform":"京东","rating":4.7,"tags":["儿童","积木","亲子"],"description":"适合亲子互动和动手能力培养，请按年龄说明使用。"},{"id":"P005","name":"亲子乐园双人票","category":"亲子宠物","price":99.0,"platform":"美团","rating":4.5,"tags":["亲子","乐园","周末"],"description":"适合家长带孩子周末游玩，具体场次以平台为准。"},{"id":"V001","name":"城市周边酒店1晚","category":"旅游住宿","price":399.0,"platform":"携程","rating":4.6,"tags":["酒店","周边游","周末"],"description":"适合周末短途住宿，房型和日期以平台库存为准。"},{"id":"V002","name":"景区成人门票","category":"旅游住宿","price":88.0,"platform":"飞猪","rating":4.7,"tags":["景区","门票","出游"],"description":"适合城市周边景点游玩，使用日期以票面规则为准。"},{"id":"V003","name":"旅行收纳套装","category":"旅游住宿","price":49.9,"platform":"淘宝","rating":4.5,"tags":["旅行收纳","行李","出游"],"description":"分类整理衣物和随身用品，提升短途出行效率。"},{"id":"V004","name":"周末民宿双人套餐","category":"旅游住宿","price":499.0,"platform":"美团","rating":4.5,"tags":["民宿","双人","度假"],"description":"含指定民宿住宿和早餐，适合周末放松。"},{"id":"V005","name":"机场接送服务券","category":"旅游住宿","price":120.0,"platform":"高德","rating":4.4,"tags":["接送机","旅行","交通"],"description":"适合机场往返接驳，需提前预约并确认服务范围。"},{"id":"LS001","name":"家政保洁2小时","category":"本地服务","price":129.0,"platform":"美团","rating":4.5,"tags":["保洁","家政","家庭"],"description":"适合日常家庭清洁，服务内容和范围以商家说明为准。"},{"id":"LS002","name":"空调清洗服务","category":"本地服务","price":99.0,"platform":"京东服务","rating":4.6,"tags":["空调清洗","家电服务","家庭"],"description":"上门清洗单台空调，具体型号和加价规则以平台为准。"},{"id":"LS003","name":"洗衣鞋洗护券","category":"本地服务","price":49.9,"platform":"美团","rating":4.5,"tags":["洗鞋","衣物洗护","本地服务"],"description":"适合运动鞋和日常衣物洗护，特殊材质可能需补差价。"},{"id":"LS004","name":"家电维修上门检测","category":"本地服务","price":59.0,"platform":"美团","rating":4.3,"tags":["维修","家电","上门服务"],"description":"含上门检测，维修配件费用需另行确认。"},{"id":"LS005","name":"同城搬家基础套餐","category":"本地服务","price":299.0,"platform":"货拉拉","rating":4.4,"tags":["搬家","同城","租房"],"description":"适合基础同城搬家，楼层和里程费用以平台报价为准。"},{"id":"CS001","name":"家庭清洁用品组合","category":"商超日用","price":69.0,"platform":"京东","rating":4.7,"tags":["清洁","家庭采购","组合装"],"description":"含清洁剂、抹布和手套，适合家庭日常清洁。"},{"id":"CS002","name":"抽纸24包整箱","category":"商超日用","price":49.9,"platform":"拼多多","rating":4.6,"tags":["抽纸","家庭装","囤货"],"description":"家庭量贩装，适合客厅、卧室和厨房日常使用。"},{"id":"CS003","name":"洗衣液家庭组合装","category":"商超日用","price":79.0,"platform":"京东","rating":4.5,"tags":["洗衣液","家庭装","洗护"],"description":"大容量组合装，适合家庭日常衣物清洁。"},{"id":"CS004","name":"加厚垃圾袋100只","category":"商超日用","price":19.9,"platform":"淘宝","rating":4.4,"tags":["垃圾袋","日用","家庭"],"description":"加厚防漏设计，适合厨房和客厅日常使用。"},{"id":"CS005","name":"家庭洗漱补充装组合","category":"商超日用","price":59.9,"platform":"拼多多","rating":4.5,"tags":["洗漱","补充装","家庭"],"description":"含洗手液和沐浴露补充装，适合家庭日常消耗。"}],"discountRules":{"full_reduction":[{"id":"FR_30_5","name":"平台满30减5","threshold":30,"reduce":5,"description":"单个平台订单满30元减5元。"},{"id":"FR_60_10","name":"生活消费满60减10","threshold":60,"reduce":10,"description":"单个平台订单满60元减10元。"},{"id":"FR_100_20","name":"家庭采购满100减20","threshold":100,"reduce":20,"description":"单个平台订单满100元减20元，适合家庭集中采购。"},{"id":"FR_200_45","name":"品质生活满200减45","threshold":200,"reduce":45,"description":"单个平台订单满200元减45元。"},{"id":"FR_300_70","name":"大额采购满300减70","threshold":300,"reduce":70,"description":"单个平台订单满300元减70元，适合家电、旅行和家庭集中采购。"}],"bundle_rules":[{"id":"BUNDLE_FOOD_59_8","name":"餐饮美食凑单满59减8","threshold":59,"reduce":8,"category":"餐饮美食","description":"餐饮美食订单满59元减8元，适合聚餐和家庭用餐。"},{"id":"BUNDLE_SNACK_59_8","name":"零食饮料凑单满59减8","threshold":59,"reduce":8,"category":"零食饮料","description":"零食饮料订单满59元减8元，适合居家囤货。"},{"id":"BUNDLE_LIFE_79_12","name":"商超日用凑单满79减12","threshold":79,"reduce":12,"category":"生活用品","description":"生活用品订单满79元减12元。"},{"id":"BUNDLE_HOME_99_15","name":"家居生活满99减15","threshold":99,"reduce":15,"category":"家居生活","description":"家居生活订单满99元减15元。"},{"id":"BUNDLE_DIGITAL_150_25","name":"数码家电凑单满150减25","threshold":150,"reduce":25,"category":"数码家电","description":"数码家电订单满150元减25元，适合耳机、小家电组合购买。"},{"id":"BUNDLE_TRAVEL_199_30","name":"旅行住宿满199减30","threshold":199,"reduce":30,"category":"旅游住宿","description":"旅行住宿订单满199元减30元，适合周末出游。"}],"member_discounts":[{"id":"MEMBER_95","name":"生活会员95折","type":"rate","rate":0.95,"min_spend":30,"max_discount":20,"description":"开通生活会员后，订单满30元享95折，最多优惠20元。"},{"id":"NEW_USER_99_15","name":"新客专享满99减15","type":"threshold","threshold":99,"reduce":15,"min_spend":99,"description":"新用户首单满99元减15元。"}],"platform_offers":{"淘宝":{"id":"TAOBAO_LIFE_98","name":"淘宝生活频道98折","type":"rate","rate":0.98,"min_spend":50,"max_discount":10,"description":"淘宝生活频道订单满50元享98折，最多优惠10元。"},"拼多多":{"id":"PDD_LIFE_97","name":"拼多多百亿补贴97折","type":"rate","rate":0.97,"min_spend":39,"max_discount":12,"description":"拼多多百亿补贴订单满39元享97折，最多优惠12元。"},"京东":{"id":"JD_LIFE_98","name":"京东生活会员98折","type":"rate","rate":0.98,"min_spend":59,"max_discount":15,"description":"京东生活会员订单满59元享98折，最多优惠15元。"},"美团":{"id":"MEITUAN_LIFE_95","name":"美团团购95折","type":"rate","rate":0.95,"min_spend":50,"max_discount":12,"description":"美团团购订单满50元享95折，最多优惠12元。"},"携程":{"id":"CTRIP_TRAVEL_95","name":"携程旅行95折","type":"rate","rate":0.95,"min_spend":199,"max_discount":40,"description":"携程指定旅行产品满199元享95折，最多优惠40元。"}}}}</script>
+  <script id="local-app-data" type="application/json">{"products":[{"id":"D001","name":"入耳式有线耳机","category":"数码配件","price":29.9,"platform":"淘宝","rating":4.5,"tags":["耳机","有线","高性价比"],"description":"带麦克风线控，适合线上会议和日常听歌。"},{"id":"D002","name":"真无线蓝牙耳机","category":"数码配件","price":89.0,"platform":"拼多多","rating":4.4,"tags":["耳机","蓝牙","通勤"],"description":"半入耳设计，续航约20小时，适合居家和通勤使用。"},{"id":"D003","name":"32GB USB3.0 U盘","category":"数码配件","price":24.9,"platform":"京东","rating":4.7,"tags":["U盘","存储","学习资料"],"description":"读取速度快，适合保存工作文件、学习资料和打印资料。"},{"id":"D004","name":"10000mAh充电宝","category":"数码配件","price":79.0,"platform":"淘宝","rating":4.6,"tags":["充电宝","便携","居家"],"description":"双向快充，机身轻便，适合办公室和短途出行。"},{"id":"D005","name":"Type-C快充数据线1.5米","category":"数码配件","price":12.9,"platform":"拼多多","rating":4.5,"tags":["数据线","快充","手机配件"],"description":"加长编织线身，支持常见安卓手机和轻薄本充电。"},{"id":"D006","name":"桌面手机支架","category":"数码配件","price":9.9,"platform":"淘宝","rating":4.4,"tags":["手机支架","桌面","线上会议"],"description":"可调节角度，适合居家追剧、线上会议和视频通话。"},{"id":"D007","name":"无线静音鼠标","category":"数码配件","price":39.9,"platform":"京东","rating":4.6,"tags":["鼠标","无线","静音"],"description":"静音按键设计，适合办公室和居家学习使用。"},{"id":"D008","name":"便携蓝牙键盘","category":"数码配件","price":69.0,"platform":"拼多多","rating":4.3,"tags":["键盘","蓝牙","便携"],"description":"紧凑布局，可连接手机和平板，适合移动记笔记。"},{"id":"D009","name":"主动降噪蓝牙耳机","category":"数码配件","price":149.0,"platform":"京东","rating":4.7,"tags":["耳机","降噪","专注"],"description":"支持主动降噪和通透模式，适合居家、通勤和安静办公环境。"},{"id":"D010","name":"轻量半入耳蓝牙耳机","category":"数码配件","price":59.9,"platform":"拼多多","rating":4.2,"tags":["耳机","蓝牙","轻量","高性价比"],"description":"轻量半入耳设计，支持蓝牙连接，适合预算有限的日常听歌和线上会议。"},{"id":"D011","name":"运动蓝牙耳机","category":"数码配件","price":95.0,"platform":"淘宝","rating":4.5,"tags":["耳机","蓝牙","运动","防汗"],"description":"挂耳式运动设计，支持蓝牙连接和防汗，适合跑步、通勤和学习使用。"},{"id":"B001","name":"氨基酸洗面奶","category":"美妆个护","price":29.9,"platform":"淘宝","rating":4.6,"tags":["洗面奶","温和","清洁"],"description":"温和清洁不紧绷，适合日常早晚洁面。"},{"id":"B002","name":"补水保湿面膜10片","category":"美妆个护","price":39.9,"platform":"拼多多","rating":4.4,"tags":["面膜","补水","护肤"],"description":"轻薄服帖，适合换季补水和熬夜后基础护理。"},{"id":"B003","name":"滋润口红","category":"美妆个护","price":49.9,"platform":"京东","rating":4.5,"tags":["口红","彩妆","日常"],"description":"日常显色色号，滋润不拔干，适合通勤和聚会活动。"},{"id":"B004","name":"清爽防晒霜SPF50","category":"美妆个护","price":59.9,"platform":"淘宝","rating":4.6,"tags":["防晒","清爽","户外活动"],"description":"清爽易推开，适合户外活动、运动和日常通勤。"},{"id":"B005","name":"去屑洗发水500ml","category":"美妆个护","price":32.9,"platform":"拼多多","rating":4.4,"tags":["洗发水","去屑","大容量"],"description":"清洁头皮并减少头屑，大容量适合家庭长期使用。"},{"id":"B006","name":"清香沐浴露500ml","category":"美妆个护","price":27.9,"platform":"京东","rating":4.5,"tags":["沐浴露","清香","洗护"],"description":"泡沫细腻易冲洗，适合日常洗护。"},{"id":"B007","name":"保湿护手霜","category":"美妆个护","price":15.9,"platform":"淘宝","rating":4.6,"tags":["护手霜","保湿","便携"],"description":"小支便携，适合秋冬季节随身补涂。"},{"id":"B008","name":"温和卸妆水300ml","category":"美妆个护","price":35.9,"platform":"拼多多","rating":4.3,"tags":["卸妆水","温和","彩妆"],"description":"可卸除日常防晒和淡妆，使用后不黏腻。"},{"id":"B009","name":"新手基础彩妆套装","category":"美妆个护","price":79.9,"platform":"京东","rating":4.2,"tags":["彩妆","套装","新手"],"description":"包含底妆和基础眼妆用品，适合新手聚会活动使用。"},{"id":"S001","name":"红烧牛肉泡面5连包","category":"零食饮料","price":19.9,"platform":"拼多多","rating":4.7,"tags":["泡面","速食","夜宵"],"description":"经典口味五连包，适合居家夜宵和应急加餐。"},{"id":"S002","name":"纯牛奶250ml×12盒","category":"零食饮料","price":39.9,"platform":"京东","rating":4.8,"tags":["牛奶","早餐","整箱"],"description":"整箱装常温纯牛奶，适合早餐和日常补充蛋白质。"},{"id":"S003","name":"原味薯片3连包","category":"零食饮料","price":15.9,"platform":"淘宝","rating":4.4,"tags":["薯片","零食","分享"],"description":"小包装组合，适合居家追剧和朋友分享。"},{"id":"S004","name":"早餐饼干2斤","category":"零食饮料","price":12.9,"platform":"拼多多","rating":4.3,"tags":["饼干","早餐","囤货"],"description":"独立小包方便携带，适合早八赶课和课间加餐。"},{"id":"S005","name":"即食燕麦片1kg","category":"零食饮料","price":25.9,"platform":"京东","rating":4.6,"tags":["燕麦","早餐","健康"],"description":"热水冲泡即可食用，适合居家早餐和轻食搭配。"},{"id":"S006","name":"矿泉水550ml×24瓶","category":"零食饮料","price":24.9,"platform":"淘宝","rating":4.5,"tags":["矿泉水","整箱","居家"],"description":"整箱饮用水，适合居家、户外活动和聚会活动储备。"},{"id":"S007","name":"无糖乌龙茶500ml×6瓶","category":"零食饮料","price":19.9,"platform":"拼多多","rating":4.4,"tags":["茶饮","无糖","解腻"],"description":"无糖茶饮组合装，适合通勤和聚餐后饮用。"},{"id":"S008","name":"每日坚果20小包","category":"零食饮料","price":29.9,"platform":"京东","rating":4.6,"tags":["坚果","健康","课间"],"description":"独立小包装，方便课间补充能量和控制食用量。"},{"id":"S009","name":"辣条混合装20包","category":"零食饮料","price":9.9,"platform":"淘宝","rating":4.3,"tags":["辣条","零食","居家"],"description":"多种口味混合装，适合居家分享和休闲零食储备。"},{"id":"L001","name":"抽纸3层24包","category":"生活用品","price":29.9,"platform":"拼多多","rating":4.7,"tags":["纸巾","抽纸","居家囤货"],"description":"原生木浆抽纸整箱装，适合家庭长期使用。"},{"id":"L002","name":"洗衣液2kg","category":"生活用品","price":24.9,"platform":"京东","rating":4.6,"tags":["洗衣液","清洁","大容量"],"description":"低泡易漂洗，适合手洗和居家公共洗衣机。"},{"id":"L003","name":"晴雨两用折叠伞","category":"生活用品","price":19.9,"platform":"淘宝","rating":4.4,"tags":["雨伞","防晒","便携"],"description":"轻量折叠设计，晴天防晒、雨天挡雨，适合随身携带。"},{"id":"L004","name":"软毛牙刷牙膏套装","category":"生活用品","price":16.9,"platform":"拼多多","rating":4.5,"tags":["牙刷","牙膏","洗漱"],"description":"软毛牙刷搭配牙膏，满足居家日常洗漱需求。"},{"id":"L005","name":"纯棉毛巾3条装","category":"生活用品","price":19.9,"platform":"淘宝","rating":4.4,"tags":["毛巾","纯棉","居家"],"description":"吸水柔软的纯棉毛巾，三条装方便换洗。"},{"id":"L006","name":"桌面收纳盒","category":"生活用品","price":14.9,"platform":"拼多多","rating":4.3,"tags":["收纳","桌面","居家"],"description":"分区收纳文具和杂物，让居家桌面更整洁。"},{"id":"L007","name":"防滑衣架20个","category":"生活用品","price":12.9,"platform":"淘宝","rating":4.4,"tags":["衣架","防滑","居家"],"description":"轻薄防滑设计，适合居家衣柜和晾晒衣物。"},{"id":"L008","name":"居家小垃圾桶","category":"生活用品","price":15.9,"platform":"京东","rating":4.5,"tags":["垃圾桶","桌面","居家"],"description":"带盖小容量垃圾桶，适合书桌旁和居家床位使用。"},{"id":"L009","name":"不锈钢保温杯","category":"生活用品","price":39.9,"platform":"淘宝","rating":4.7,"tags":["保温杯","水杯","通勤"],"description":"长效保温保冷，容量适中，适合通勤和专注携带。"},{"id":"G001","name":"简约定制笔记本","category":"礼品文创","price":9.9,"platform":"拼多多","rating":4.6,"tags":["笔记本","学习","文创"],"description":"简约主题封面，内页顺滑，适合课堂记录和送礼。"},{"id":"G002","name":"商务钢笔礼盒","category":"礼品文创","price":39.9,"platform":"淘宝","rating":4.5,"tags":["钢笔","礼盒","生日礼物"],"description":"含钢笔、墨囊和包装盒，适合生日或毕业赠礼。"},{"id":"G003","name":"桌面励志摆件","category":"礼品文创","price":19.9,"platform":"拼多多","rating":4.3,"tags":["摆件","桌面","礼物"],"description":"小巧桌面装饰，适合送给朋友或布置书桌。"},{"id":"G004","name":"文创帆布包","category":"礼品文创","price":29.9,"platform":"淘宝","rating":4.6,"tags":["帆布包","实用","文创"],"description":"大容量帆布托特包，适合通勤、购物和日常出行。"},{"id":"G005","name":"复古手账套装","category":"礼品文创","price":35.9,"platform":"京东","rating":4.7,"tags":["手账","文具","礼物"],"description":"含手账本、贴纸和胶带，适合记录日常生活和送礼。"},{"id":"G006","name":"古风书签礼盒","category":"礼品文创","price":15.9,"platform":"淘宝","rating":4.5,"tags":["书签","礼盒","文创"],"description":"多款古风书签组合，适合读书爱好者和小型伴手礼。"},{"id":"G007","name":"香薰蜡烛礼盒","category":"礼品文创","price":49.9,"platform":"拼多多","rating":4.4,"tags":["香薰","蜡烛","生日礼物"],"description":"淡香型香薰蜡烛组合，适合居家氛围布置和生日赠礼。"},{"id":"G008","name":"定制照片相框","category":"礼品文创","price":29.9,"platform":"京东","rating":4.6,"tags":["相框","定制","纪念礼物"],"description":"可放入生活合照或生活照片，适合纪念日和毕业礼物。"},{"id":"G009","name":"毕业纪念册","category":"礼品文创","price":59.9,"platform":"淘宝","rating":4.8,"tags":["纪念册","毕业","礼物"],"description":"可书写留言的纪念册，适合集体纪念和毕业留念。"},{"id":"F001","name":"双人火锅套餐","category":"餐饮美食","price":158.0,"platform":"美团","rating":4.7,"tags":["火锅","双人餐","周末聚餐"],"description":"含锅底、荤素拼盘和饮品，适合朋友或情侣聚餐。"},{"id":"F002","name":"家庭披萨套餐","category":"餐饮美食","price":99.0,"platform":"饿了么","rating":4.5,"tags":["披萨","家庭餐","外卖"],"description":"含大份披萨、小食和饮料，适合家庭简餐或朋友分享。"},{"id":"F003","name":"工作日轻食午餐券","category":"餐饮美食","price":29.9,"platform":"美团","rating":4.6,"tags":["午餐","轻食","工作餐"],"description":"可选沙拉、鸡胸肉和谷物饭，适合工作日快速用餐。"},{"id":"F004","name":"咖啡饮品兑换券","category":"餐饮美食","price":19.9,"platform":"美团","rating":4.5,"tags":["咖啡","饮品","下午茶"],"description":"可用于指定咖啡或茶饮，适合通勤和下午茶场景。"},{"id":"F005","name":"生鲜蔬菜周套餐","category":"餐饮美食","price":69.0,"platform":"京东到家","rating":4.4,"tags":["生鲜","蔬菜","家庭采购"],"description":"包含多种当季蔬菜，适合家庭一周基础食材补充。"},{"id":"F006","name":"家庭米面粮油组合","category":"餐饮美食","price":129.0,"platform":"京东","rating":4.7,"tags":["粮油","家庭采购","囤货"],"description":"大米、面粉和食用油基础组合，适合家庭日常储备。"},{"id":"W001","name":"基础纯棉T恤","category":"服饰鞋包","price":59.9,"platform":"淘宝","rating":4.5,"tags":["T恤","纯棉","日常穿搭"],"description":"版型简洁，适合通勤、休闲和叠穿。"},{"id":"W002","name":"通勤双肩包","category":"服饰鞋包","price":129.0,"platform":"京东","rating":4.6,"tags":["双肩包","通勤","电脑包"],"description":"带独立电脑隔层，适合上班、短途出行和日常使用。"},{"id":"W003","name":"轻量运动鞋","category":"服饰鞋包","price":199.0,"platform":"拼多多","rating":4.4,"tags":["运动鞋","轻量","跑步"],"description":"缓震鞋底和透气鞋面，适合日常步行与轻度运动。"},{"id":"W004","name":"保暖针织外套","category":"服饰鞋包","price":159.0,"platform":"淘宝","rating":4.5,"tags":["外套","保暖","秋冬"],"description":"柔软针织面料，适合换季通勤和日常外搭。"},{"id":"W005","name":"居家防滑拖鞋","category":"服饰鞋包","price":29.9,"platform":"拼多多","rating":4.3,"tags":["拖鞋","防滑","居家"],"description":"轻便防滑，适合家庭日常和浴室使用。"},{"id":"A001","name":"迷你电饭煲","category":"数码家电","price":159.0,"platform":"京东","rating":4.6,"tags":["电饭煲","小家电","租房"],"description":"小容量多功能设计，适合独居、租房和小家庭使用。"},{"id":"A002","name":"家用空气炸锅","category":"数码家电","price":199.0,"platform":"拼多多","rating":4.5,"tags":["空气炸锅","厨房电器","家庭"],"description":"操作简单，适合日常快手烹饪和家庭加餐。"},{"id":"A003","name":"便携蓝牙音箱","category":"数码家电","price":99.0,"platform":"淘宝","rating":4.4,"tags":["音箱","蓝牙","户外"],"description":"小巧便携，适合居家听歌、露营和短途出游。"},{"id":"A004","name":"手持挂烫机","category":"数码家电","price":129.0,"platform":"京东","rating":4.5,"tags":["挂烫机","衣物护理","通勤"],"description":"快速预热，适合通勤衣物除皱和日常护理。"},{"id":"J001","name":"多功能不粘锅","category":"家居生活","price":129.0,"platform":"京东","rating":4.6,"tags":["锅具","厨房","租房"],"description":"煎炒煮一体，适合独居和家庭日常烹饪。"},{"id":"J002","name":"家用保温电热水壶","category":"家居生活","price":79.9,"platform":"淘宝","rating":4.5,"tags":["电热水壶","厨房","保温"],"description":"自动断电和保温功能，满足家庭日常饮水需求。"},{"id":"J003","name":"全棉四件套","category":"家居生活","price":199.0,"platform":"拼多多","rating":4.5,"tags":["床品","四件套","换新"],"description":"亲肤棉质面料，适合卧室换季和乔迁布置。"},{"id":"J004","name":"折叠收纳柜","category":"家居生活","price":89.0,"platform":"京东","rating":4.4,"tags":["收纳","储物","租房"],"description":"多层折叠结构，适合小户型、租房和杂物整理。"},{"id":"J005","name":"家用净水壶","category":"家居生活","price":99.0,"platform":"淘宝","rating":4.5,"tags":["净水壶","饮水","家庭"],"description":"过滤水垢和杂质，适合租房及家庭日常饮水。"},{"id":"X001","name":"电子体温计","category":"健康医疗","price":29.9,"platform":"京东","rating":4.7,"tags":["体温计","健康监测","家庭"],"description":"快速测温，适合家庭日常健康监测。"},{"id":"X002","name":"家庭急救包","category":"健康医疗","price":49.9,"platform":"淘宝","rating":4.6,"tags":["急救","家庭","常备"],"description":"含基础消毒、包扎和固定用品，适合家庭应急储备。"},{"id":"X003","name":"复合维生素60片","category":"健康医疗","price":69.0,"platform":"京东","rating":4.5,"tags":["维生素","营养","日常补充"],"description":"日常营养补充产品，使用前请按说明并结合个人情况选择。"},{"id":"X004","name":"医用外科口罩50只","category":"健康医疗","price":24.9,"platform":"拼多多","rating":4.7,"tags":["口罩","防护","家庭"],"description":"独立包装，适合家庭日常防护和出行备用。"},{"id":"X005","name":"颈椎热敷贴","category":"健康医疗","price":39.9,"platform":"淘宝","rating":4.4,"tags":["热敷","颈肩","居家护理"],"description":"温热敷贴，适合久坐后居家放松，不替代医疗诊疗。"},{"id":"T001","name":"共享单车月卡","category":"交通出行","price":16.8,"platform":"美团","rating":4.6,"tags":["单车","月卡","通勤"],"description":"适合短距离通勤和接驳，使用范围以平台规则为准。"},{"id":"T002","name":"地铁10次乘车券","category":"交通出行","price":30.0,"platform":"支付宝","rating":4.7,"tags":["地铁","通勤","乘车券"],"description":"适合日常通勤，覆盖城市地铁基础出行需求。"},{"id":"T003","name":"网约车20元券包","category":"交通出行","price":15.9,"platform":"滴滴出行","rating":4.3,"tags":["打车","优惠券","出行"],"description":"含多张小额打车券，适合雨天、夜间和赶时间出行。"},{"id":"T004","name":"加油200元券包","category":"交通出行","price":189.0,"platform":"易捷","rating":4.5,"tags":["加油","自驾","用车"],"description":"适合自驾通勤和家庭用车，具体适用站点以平台为准。"},{"id":"E001","name":"在线课程月卡","category":"教育学习","price":99.0,"platform":"京东","rating":4.4,"tags":["在线课程","技能提升","学习"],"description":"可学习平台指定课程，适合职业技能和兴趣提升。"},{"id":"E002","name":"电子书平台月卡","category":"教育学习","price":25.0,"platform":"淘宝","rating":4.6,"tags":["电子书","阅读","会员"],"description":"适合日常阅读和知识拓展，具体书库以平台说明为准。"},{"id":"E003","name":"A4打印纸500张","category":"教育学习","price":24.9,"platform":"京东","rating":4.7,"tags":["打印纸","办公","居家学习"],"description":"适合家庭打印、办公资料和孩子作业使用。"},{"id":"E004","name":"英语口语练习课程","category":"教育学习","price":129.0,"platform":"拼多多","rating":4.3,"tags":["英语","口语","课程"],"description":"包含情景练习和发音训练，适合业余时间自主学习。"},{"id":"R001","name":"电影双人票","category":"文体娱乐","price":79.9,"platform":"美团","rating":4.6,"tags":["电影","双人","约会"],"description":"适合情侣、朋友或家人周末观影，具体影院以平台为准。"},{"id":"R002","name":"健身房月卡","category":"文体娱乐","price":199.0,"platform":"美团","rating":4.4,"tags":["健身","月卡","运动"],"description":"可在指定门店使用，适合建立短期运动习惯。"},{"id":"R003","name":"家庭桌游套装","category":"文体娱乐","price":89.0,"platform":"淘宝","rating":4.7,"tags":["桌游","家庭","聚会"],"description":"适合家庭聚会和朋友互动，包含多种基础玩法。"},{"id":"R004","name":"城市博物馆通票","category":"文体娱乐","price":60.0,"platform":"携程","rating":4.8,"tags":["博物馆","城市游","文化"],"description":"覆盖多个合作场馆，适合周末城市文化游览。"},{"id":"P001","name":"全价猫粮2kg","category":"亲子宠物","price":89.0,"platform":"京东","rating":4.6,"tags":["猫粮","宠物","囤货"],"description":"适合成年猫日常喂养，换粮时请循序渐进。"},{"id":"P002","name":"豆腐猫砂10L","category":"亲子宠物","price":39.9,"platform":"拼多多","rating":4.5,"tags":["猫砂","宠物","清洁"],"description":"结团和吸味表现稳定，适合猫咪家庭日常清洁。"},{"id":"P003","name":"宠物互动玩具","category":"亲子宠物","price":29.9,"platform":"淘宝","rating":4.4,"tags":["宠物玩具","互动","猫狗"],"description":"适合日常陪伴和互动，使用时请注意宠物安全。"},{"id":"P004","name":"儿童益智积木","category":"亲子宠物","price":79.0,"platform":"京东","rating":4.7,"tags":["儿童","积木","亲子"],"description":"适合亲子互动和动手能力培养，请按年龄说明使用。"},{"id":"P005","name":"亲子乐园双人票","category":"亲子宠物","price":99.0,"platform":"美团","rating":4.5,"tags":["亲子","乐园","周末"],"description":"适合家长带孩子周末游玩，具体场次以平台为准。"},{"id":"V001","name":"城市周边酒店1晚","category":"旅游住宿","price":399.0,"platform":"携程","rating":4.6,"tags":["酒店","周边游","周末"],"description":"适合周末短途住宿，房型和日期以平台库存为准。"},{"id":"V002","name":"景区成人门票","category":"旅游住宿","price":88.0,"platform":"飞猪","rating":4.7,"tags":["景区","门票","出游"],"description":"适合城市周边景点游玩，使用日期以票面规则为准。"},{"id":"V003","name":"旅行收纳套装","category":"旅游住宿","price":49.9,"platform":"淘宝","rating":4.5,"tags":["旅行收纳","行李","出游"],"description":"分类整理衣物和随身用品，提升短途出行效率。"},{"id":"V004","name":"周末民宿双人套餐","category":"旅游住宿","price":499.0,"platform":"美团","rating":4.5,"tags":["民宿","双人","度假"],"description":"含指定民宿住宿和早餐，适合周末放松。"},{"id":"V005","name":"机场接送服务券","category":"旅游住宿","price":120.0,"platform":"高德","rating":4.4,"tags":["接送机","旅行","交通"],"description":"适合机场往返接驳，需提前预约并确认服务范围。"},{"id":"LS001","name":"家政保洁2小时","category":"本地服务","price":129.0,"platform":"美团","rating":4.5,"tags":["保洁","家政","家庭"],"description":"适合日常家庭清洁，服务内容和范围以商家说明为准。"},{"id":"LS002","name":"空调清洗服务","category":"本地服务","price":99.0,"platform":"京东服务","rating":4.6,"tags":["空调清洗","家电服务","家庭"],"description":"上门清洗单台空调，具体型号和加价规则以平台为准。"},{"id":"LS003","name":"洗衣鞋洗护券","category":"本地服务","price":49.9,"platform":"美团","rating":4.5,"tags":["洗鞋","衣物洗护","本地服务"],"description":"适合运动鞋和日常衣物洗护，特殊材质可能需补差价。"},{"id":"LS004","name":"家电维修上门检测","category":"本地服务","price":59.0,"platform":"美团","rating":4.3,"tags":["维修","家电","上门服务"],"description":"含上门检测，维修配件费用需另行确认。"},{"id":"LS005","name":"同城搬家基础套餐","category":"本地服务","price":299.0,"platform":"货拉拉","rating":4.4,"tags":["搬家","同城","租房"],"description":"适合基础同城搬家，楼层和里程费用以平台报价为准。"},{"id":"CS001","name":"家庭清洁用品组合","category":"商超日用","price":69.0,"platform":"京东","rating":4.7,"tags":["清洁","家庭采购","组合装"],"description":"含清洁剂、抹布和手套，适合家庭日常清洁。"},{"id":"CS002","name":"抽纸24包整箱","category":"商超日用","price":49.9,"platform":"拼多多","rating":4.6,"tags":["抽纸","家庭装","囤货"],"description":"家庭量贩装，适合客厅、卧室和厨房日常使用。"},{"id":"CS003","name":"洗衣液家庭组合装","category":"商超日用","price":79.0,"platform":"京东","rating":4.5,"tags":["洗衣液","家庭装","洗护"],"description":"大容量组合装，适合家庭日常衣物清洁。"},{"id":"CS004","name":"加厚垃圾袋100只","category":"商超日用","price":19.9,"platform":"淘宝","rating":4.4,"tags":["垃圾袋","日用","家庭"],"description":"加厚防漏设计，适合厨房和客厅日常使用。"},{"id":"CS005","name":"家庭洗漱补充装组合","category":"商超日用","price":59.9,"platform":"拼多多","rating":4.5,"tags":["洗漱","补充装","家庭"],"description":"含洗手液和沐浴露补充装，适合家庭日常消耗。"}],"discountRules":{"full_reduction":[{"id":"FR_30_5","name":"平台满30减5","threshold":30,"reduce":5,"description":"单个平台订单满30元减5元。"},{"id":"FR_60_10","name":"生活消费满60减10","threshold":60,"reduce":10,"description":"单个平台订单满60元减10元。"},{"id":"FR_100_20","name":"家庭采购满100减20","threshold":100,"reduce":20,"description":"单个平台订单满100元减20元，适合家庭集中采购。"},{"id":"FR_200_45","name":"品质生活满200减45","threshold":200,"reduce":45,"description":"单个平台订单满200元减45元。"},{"id":"FR_300_70","name":"大额采购满300减70","threshold":300,"reduce":70,"description":"单个平台订单满300元减70元，适合家电、旅行和家庭集中采购。"}],"bundle_rules":[{"id":"BUNDLE_FOOD_59_8","name":"餐饮美食凑单满59减8","threshold":59,"reduce":8,"category":"餐饮美食","description":"餐饮美食订单满59元减8元，适合聚餐和家庭用餐。"},{"id":"BUNDLE_SNACK_59_8","name":"零食饮料凑单满59减8","threshold":59,"reduce":8,"category":"零食饮料","description":"零食饮料订单满59元减8元，适合居家囤货。"},{"id":"BUNDLE_LIFE_79_12","name":"商超日用凑单满79减12","threshold":79,"reduce":12,"category":"生活用品","description":"生活用品订单满79元减12元。"},{"id":"BUNDLE_HOME_99_15","name":"家居生活满99减15","threshold":99,"reduce":15,"category":"家居生活","description":"家居生活订单满99元减15元。"},{"id":"BUNDLE_DIGITAL_150_25","name":"数码家电凑单满150减25","threshold":150,"reduce":25,"category":"数码家电","description":"数码家电订单满150元减25元，适合耳机、小家电组合购买。"},{"id":"BUNDLE_TRAVEL_199_30","name":"旅行住宿满199减30","threshold":199,"reduce":30,"category":"旅游住宿","description":"旅行住宿订单满199元减30元，适合周末出游。"}],"member_discounts":[{"id":"MEMBER_95","name":"生活会员95折","type":"rate","rate":0.95,"min_spend":30,"max_discount":20,"description":"开通生活会员后，订单满30元享95折，最多优惠20元。"},{"id":"NEW_USER_99_15","name":"新客专享满99减15","type":"threshold","threshold":99,"reduce":15,"min_spend":99,"description":"新用户首单满99元减15元。"}],"platform_offers":{"淘宝":{"id":"TAOBAO_LIFE_98","name":"淘宝生活频道98折","type":"rate","rate":0.98,"min_spend":50,"max_discount":10,"description":"淘宝生活频道订单满50元享98折，最多优惠10元。"},"拼多多":{"id":"PDD_LIFE_97","name":"拼多多百亿补贴97折","type":"rate","rate":0.97,"min_spend":39,"max_discount":12,"description":"拼多多百亿补贴订单满39元享97折，最多优惠12元。"},"京东":{"id":"JD_LIFE_98","name":"京东生活会员98折","type":"rate","rate":0.98,"min_spend":59,"max_discount":15,"description":"京东生活会员订单满59元享98折，最多优惠15元。"},"美团":{"id":"MEITUAN_LIFE_95","name":"美团团购95折","type":"rate","rate":0.95,"min_spend":50,"max_discount":12,"description":"美团团购订单满50元享95折，最多优惠12元。"},"携程":{"id":"CTRIP_TRAVEL_95","name":"携程旅行95折","type":"rate","rate":0.95,"min_spend":199,"max_discount":40,"description":"携程指定旅行产品满199元享95折，最多优惠40元。"}}}}</script>
 
   <script>
     /**
@@ -5199,25 +5344,34 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
     (() => {
       "use strict";
 
+      const AUTH_USERS_KEY = "life-agent-auth-users-v1";
+      const AUTH_SESSION_KEY = "life-agent-auth-session-v1";
+      const AUTH_MIGRATION_KEY = "life-agent-legacy-migration-owner";
+      const USER_STORAGE_NAMESPACE = "life-agent-user";
       const STORAGE_KEYS = {
+        apiBaseUrl: "",
+        budgets: "",
+        budgetPeriod: "",
+        expenses: "",
+        chatHistory: ""
+      };
+      const LEGACY_STORAGE_KEYS = {
         apiBaseUrl: "life-agent-api-base-url",
         budgets: "life-agent-budgets",
         budgetPeriod: "life-agent-budget-period",
         expenses: "life-agent-expenses",
-        chatHistory: "life-agent-chat-history",
-        projectIntroSeen: "life-agent-project-intro-seen",
-        demoSeeded: "life-agent-demo-seeded"
+        chatHistory: "life-agent-chat-history"
       };
-      const LEGACY_STORAGE_KEYS = {
+      const LEGACY_CAMPUS_STORAGE_KEYS = {
         apiBaseUrl: "campus-agent-api-base-url",
         budgets: "campus-agent-budgets",
         budgetPeriod: "campus-agent-budget-period",
         expenses: "campus-agent-expenses",
-        chatHistory: "campus-agent-chat-history",
-        projectIntroSeen: "campus-agent-project-intro-seen",
-        demoSeeded: "campus-agent-demo-seeded"
+        chatHistory: "campus-agent-chat-history"
       };
-      const DEFAULT_BUDGETS = { monthly: 6000, weekly: 1500 };
+      const DEFAULT_BUDGETS = { monthly: 0, weekly: 0 };
+      let activeUser = null;
+      let appInitialized = false;
       const IS_FILE_MODE = window.location.protocol === "file:";
       const DEFAULT_API_BASE_URL = IS_FILE_MODE
         ? "http://127.0.0.1:5000"
@@ -5234,10 +5388,10 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         "其他": "#94a3b8"
       };
 
-      // 内嵌演示引擎：直接打开 index.html 时无需 Flask 后端即可完成核心演示。
-      const LOCAL_DEMO_DATA = JSON.parse(document.getElementById("local-demo-data").textContent);
-      const LOCAL_PRODUCTS = LOCAL_DEMO_DATA.products;
-      const LOCAL_DISCOUNT_RULES = LOCAL_DEMO_DATA.discountRules;
+      // 内嵌智能引擎：直接打开 index.html 时无需 Flask 后端即可完成核心功能。
+      const LOCAL_APP_DATA = JSON.parse(document.getElementById("local-app-data").textContent);
+      const LOCAL_PRODUCTS = LOCAL_APP_DATA.products;
+      const LOCAL_DISCOUNT_RULES = LOCAL_APP_DATA.discountRules;
       const LOCAL_CATEGORY_RULES = [
         {
           category: "餐饮美食",
@@ -5382,47 +5536,243 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         return `expense-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       }
 
-      /** 构造跨月度、跨周度的生活消费演示数据，覆盖常见消费分类。 */
-      function buildDemoMonthlyExpenses() {
-        const now = new Date();
-        const demoItems = [
-          ["工作日午餐", 35, "餐饮美食", 0],
-          ["周末家庭聚餐", 128, "餐饮美食", 2],
-          ["超市日用采购", 186, "商超日用", 4],
-          ["月度房租", 3200, "住房水电", 5],
-          ["水电燃气", 180, "住房水电", 6],
-          ["地铁公交充值", 50, "交通出行", 8],
-          ["网约车", 26, "交通出行", 9],
-          ["在线课程", 99, "教育学习", 11],
-          ["电影双人票", 79.9, "文体娱乐", 12],
-          ["宠物猫粮", 89, "亲子宠物", 13],
-          ["家庭清洁用品", 79.9, "生活用品", 15],
-          ["日常洗护", 45, "美妆个护", 17],
-          ["家庭常备药品", 58, "健康医疗", 18],
-          ["周末咖啡", 19.9, "餐饮美食", 19],
-          ["上月房租", 3200, "住房水电", 35],
-          ["上月超市采购", 155, "商超日用", 38],
-          ["上月交通充值", 50, "交通出行", 41],
-          ["上月家庭聚餐", 168, "餐饮美食", 45],
-          ["上月电影双人票", 79.9, "文体娱乐", 49],
-          ["上月学习资料", 99, "教育学习", 52],
-          ["上月宠物用品", 129, "亲子宠物", 56],
-          ["上月健康用品", 65, "健康医疗", 60]
-        ];
-        return demoItems.map(([name, amount, category, offset], index) => {
-          const date = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate() - offset
-          );
-          return {
-            id: `demo-${Date.now()}-${index}`,
-            name,
-            amount,
-            category,
-            date: localDateString(date)
-          };
+      function bytesToHex(bytes) {
+        return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+      }
+
+      function generateSalt() {
+        const bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        return bytesToHex(bytes);
+      }
+
+      async function derivePasswordHash(password, salt) {
+        if (!window.crypto?.subtle) {
+          throw new Error("当前浏览器不支持安全登录，请使用 HTTPS 或 localhost 访问。");
+        }
+        const encoder = new TextEncoder();
+        const keyMaterial = await window.crypto.subtle.importKey(
+          "raw",
+          encoder.encode(password),
+          "PBKDF2",
+          false,
+          ["deriveBits"]
+        );
+        const bits = await window.crypto.subtle.deriveBits(
+          {
+            name: "PBKDF2",
+            salt: encoder.encode(salt),
+            iterations: 120000,
+            hash: "SHA-256"
+          },
+          keyMaterial,
+          256
+        );
+        return bytesToHex(new Uint8Array(bits));
+      }
+
+      function readAuthUsers() {
+        try {
+          const users = JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || "[]");
+          return Array.isArray(users)
+            ? users.filter((user) => user && user.id && user.email && user.passwordHash && user.salt)
+            : [];
+        } catch (error) {
+          console.warn("读取账号数据失败", error);
+          return [];
+        }
+      }
+
+      function writeAuthUsers(users) {
+        localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+      }
+
+      function configureUserStorage(userId) {
+        const prefix = `${USER_STORAGE_NAMESPACE}:${userId}`;
+        STORAGE_KEYS.apiBaseUrl = `${prefix}:api-base-url`;
+        STORAGE_KEYS.budgets = `${prefix}:budgets`;
+        STORAGE_KEYS.budgetPeriod = `${prefix}:budget-period`;
+        STORAGE_KEYS.expenses = `${prefix}:expenses`;
+        STORAGE_KEYS.chatHistory = `${prefix}:chat-history`;
+      }
+
+      function migrateLegacyDataForUser(userId) {
+        if (localStorage.getItem(AUTH_MIGRATION_KEY)) return;
+        const keys = ["apiBaseUrl", "budgets", "budgetPeriod", "expenses", "chatHistory"];
+        const hasLegacyData = (source) => keys.some((key) => {
+          const value = localStorage.getItem(source[key]);
+          return value !== null && value !== "";
         });
+        const source = hasLegacyData(LEGACY_STORAGE_KEYS)
+          ? LEGACY_STORAGE_KEYS
+          : (hasLegacyData(LEGACY_CAMPUS_STORAGE_KEYS) ? LEGACY_CAMPUS_STORAGE_KEYS : null);
+        if (!source) return;
+
+        keys.forEach((key) => {
+          const value = localStorage.getItem(source[key]);
+          if (value !== null && localStorage.getItem(STORAGE_KEYS[key]) === null) {
+            localStorage.setItem(STORAGE_KEYS[key], value);
+          }
+        });
+        localStorage.setItem(AUTH_MIGRATION_KEY, userId);
+      }
+
+      function setAuthError(elementId, message = "") {
+        const element = $(`#${elementId}`);
+        if (!element) return;
+        element.textContent = message;
+        element.classList.toggle("hidden", !message);
+      }
+
+      function setAuthMode(mode) {
+        const nextMode = mode === "register" ? "register" : "login";
+        $("#login-form").classList.toggle("hidden", nextMode !== "login");
+        $("#register-form").classList.toggle("hidden", nextMode !== "register");
+        $$("[data-auth-mode]").forEach((button) => {
+          const isActive = button.dataset.authMode === nextMode;
+          button.classList.toggle("active", isActive);
+          button.setAttribute("aria-selected", String(isActive));
+        });
+        setAuthError("login-error");
+        setAuthError("register-error");
+        window.setTimeout(() => {
+          $(nextMode === "login" ? "#login-account" : "#register-name")?.focus();
+        }, 50);
+      }
+
+      function showAuthGate() {
+        document.body.classList.add("auth-locked");
+        setAuthMode("login");
+        hidePageLoader();
+      }
+
+      function setAuthButtonLoading(buttonSelector, loading, loadingText) {
+        const button = $(buttonSelector);
+        if (!button) return;
+        if (!button.dataset.originalText) button.dataset.originalText = button.textContent;
+        button.disabled = loading;
+        button.textContent = loading ? loadingText : button.dataset.originalText;
+      }
+
+      function startAuthenticatedApp(user) {
+        activeUser = user;
+        configureUserStorage(user.id);
+        migrateLegacyDataForUser(user.id);
+        localStorage.setItem(AUTH_SESSION_KEY, user.id);
+        state.activePage = "chat";
+        state.apiBaseUrl = DEFAULT_API_BASE_URL;
+        state.executionMode = "detecting";
+        state.isSending = false;
+        state.budgetPeriod = "monthly";
+        state.budgets = { ...DEFAULT_BUDGETS, periods: {} };
+        state.selectedBudgetDate = null;
+        state.expenses = [];
+        state.chatHistory = [];
+        $("#current-user-name").textContent = user.name || user.email;
+        $("#current-user-name").title = user.email;
+        document.body.classList.remove("auth-locked");
+        initApp();
+      }
+
+      function logoutUser() {
+        if (!window.confirm("确认退出登录吗？账号和个人数据会保留在当前浏览器中。")) return;
+        localStorage.removeItem(AUTH_SESSION_KEY);
+        activeUser = null;
+        window.location.hash = "";
+        window.location.reload();
+      }
+
+      function initAuth() {
+        $$(".auth-tab").forEach((button) => {
+          button.addEventListener("click", () => setAuthMode(button.dataset.authMode));
+        });
+        $("#logout-button").addEventListener("click", logoutUser);
+
+        $("#login-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          setAuthError("login-error");
+          const email = $("#login-account").value.trim().toLowerCase();
+          const password = $("#login-password").value;
+          if (!email || !password) {
+            setAuthError("login-error", "请输入邮箱和密码。");
+            return;
+          }
+
+          setAuthButtonLoading("#login-submit", true, "正在登录...");
+          try {
+            const user = readAuthUsers().find((item) => item.email.toLowerCase() === email);
+            if (!user) throw new Error("账号不存在，请先注册。");
+            const passwordHash = await derivePasswordHash(password, user.salt);
+            if (passwordHash !== user.passwordHash) throw new Error("密码错误，请重新输入。");
+            startAuthenticatedApp(user);
+          } catch (error) {
+            setAuthError("login-error", error.message || "登录失败，请稍后重试。");
+          } finally {
+            setAuthButtonLoading("#login-submit", false, "");
+          }
+        });
+
+        $("#register-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          setAuthError("register-error");
+          const name = $("#register-name").value.trim();
+          const email = $("#register-email").value.trim().toLowerCase();
+          const password = $("#register-password").value;
+          const confirmPassword = $("#register-confirm").value;
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+          if (name.length < 1 || name.length > 20) {
+            setAuthError("register-error", "昵称长度应为 1 到 20 个字符。");
+            return;
+          }
+          if (!emailPattern.test(email)) {
+            setAuthError("register-error", "请输入有效的邮箱地址。");
+            return;
+          }
+          if (password.length < 6) {
+            setAuthError("register-error", "密码长度不能少于 6 位。");
+            return;
+          }
+          if (password !== confirmPassword) {
+            setAuthError("register-error", "两次输入的密码不一致。");
+            return;
+          }
+          if (readAuthUsers().some((item) => item.email.toLowerCase() === email)) {
+            setAuthError("register-error", "该邮箱已经注册，请直接登录。");
+            return;
+          }
+
+          setAuthButtonLoading("#register-submit", true, "正在创建账号...");
+          try {
+            const salt = generateSalt();
+            const passwordHash = await derivePasswordHash(password, salt);
+            const user = {
+              id: generateId(),
+              name,
+              email,
+              salt,
+              passwordHash,
+              createdAt: new Date().toISOString()
+            };
+            const users = readAuthUsers();
+            users.push(user);
+            writeAuthUsers(users);
+            startAuthenticatedApp(user);
+          } catch (error) {
+            setAuthError("register-error", error.message || "注册失败，请稍后重试。");
+          } finally {
+            setAuthButtonLoading("#register-submit", false, "");
+          }
+        });
+
+        const sessionUserId = localStorage.getItem(AUTH_SESSION_KEY);
+        const sessionUser = sessionUserId ? readAuthUsers().find((user) => user.id === sessionUserId) : null;
+        if (sessionUser) {
+          startAuthenticatedApp(sessionUser);
+        } else {
+          localStorage.removeItem(AUTH_SESSION_KEY);
+          showAuthGate();
+        }
       }
 
       function readStorageValue(key, legacyKey = null) {
@@ -5462,11 +5812,11 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
       }
 
       function loadPersistedState() {
-        const savedBudgets = readJsonStorage(STORAGE_KEYS.budgets, DEFAULT_BUDGETS, LEGACY_STORAGE_KEYS.budgets);
-        const savedExpenses = readJsonStorage(STORAGE_KEYS.expenses, [], LEGACY_STORAGE_KEYS.expenses);
-        const savedPeriod = readStorageValue(STORAGE_KEYS.budgetPeriod, LEGACY_STORAGE_KEYS.budgetPeriod);
-        const savedApiBaseUrl = readStorageValue(STORAGE_KEYS.apiBaseUrl, LEGACY_STORAGE_KEYS.apiBaseUrl);
-        const savedChatHistory = readJsonStorage(STORAGE_KEYS.chatHistory, [], LEGACY_STORAGE_KEYS.chatHistory);
+        const savedBudgets = readJsonStorage(STORAGE_KEYS.budgets, DEFAULT_BUDGETS);
+        const savedExpenses = readJsonStorage(STORAGE_KEYS.expenses, []);
+        const savedPeriod = readStorageValue(STORAGE_KEYS.budgetPeriod);
+        const savedApiBaseUrl = readStorageValue(STORAGE_KEYS.apiBaseUrl);
+        const savedChatHistory = readJsonStorage(STORAGE_KEYS.chatHistory, []);
 
         if (savedBudgets && typeof savedBudgets === "object") {
           state.budgets.monthly = Number(savedBudgets.monthly) > 0 ? Number(savedBudgets.monthly) : DEFAULT_BUDGETS.monthly;
@@ -5533,13 +5883,6 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
             }));
         }
 
-        // 首次演示自动载入月度模拟消费数据；用户主动清空后不会再次强制覆盖。
-        const demoWasSeeded = readStorageValue(STORAGE_KEYS.demoSeeded, LEGACY_STORAGE_KEYS.demoSeeded) === "true";
-        if (!state.expenses.length && !demoWasSeeded) {
-          state.expenses = buildDemoMonthlyExpenses();
-          writeJsonStorage(STORAGE_KEYS.expenses, state.expenses);
-          localStorage.setItem(STORAGE_KEYS.demoSeeded, "true");
-        }
       }
 
       function saveChatHistory() {
@@ -5657,7 +6000,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
             state.apiBaseUrl = normalizeApiBaseUrl(input.value);
             input.value = state.apiBaseUrl;
             localStorage.setItem(STORAGE_KEYS.apiBaseUrl, state.apiBaseUrl);
-            setApiStatus("online", state.executionMode === "local" ? "本地演示模式 · 无需后端" : "等待后端连接");
+            setApiStatus("online", state.executionMode === "local" ? "本地智能模式 · 无需后端" : "等待后端连接");
             showToast("接口地址已保存。", "success");
           } catch (error) {
             showToast(error.message, "error");
@@ -5971,7 +6314,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
           `<span class="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">${escapeHtml(tool)}</span>`
         )).join("");
       }
-      /** ---------- 本地演示 Agent：无需 Flask 后端即可直接运行 ---------- */
+      /** ---------- 本地智能引擎：无需 Flask 后端即可直接运行 ---------- */
       function localRound(value) {
         return Math.round((Number(value) || 0) * 100) / 100;
       }
@@ -6559,7 +6902,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         state.executionMode = mode;
         const hint = $("#api-mode-hint");
         if (mode === "local") {
-          setApiStatus("online", "本地演示模式 · 无需后端");
+          setApiStatus("online", "本地智能模式 · 无需后端");
           if (hint) hint.textContent = "当前直接使用内嵌生活消费商品、服务与优惠数据，无需启动后端或配置 API Key。";
         } else {
           setApiStatus("online", "后端服务已连接");
@@ -6782,10 +7125,10 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
                 Number(backendError.status) >= 500;
               if (!canFallback) throw backendError;
 
-              console.warn("[Agent] 后端不可用，自动切换本地演示模式", backendError);
+              console.warn("[Agent] 后端不可用，自动切换本地智能模式", backendError);
               setExecutionMode("local");
               payload = localAgentReply(userInput, historyForRequest);
-              showToast("后端服务不可用，已自动切换为本地演示模式。", "info");
+              showToast("后端服务不可用，已自动切换为本地智能模式。", "info");
             }
           }
 
@@ -6802,8 +7145,8 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
             setApiStatus(
               "online",
               payload.requires_input
-                ? "本地演示模式 · 等待补充信息"
-                : "本地演示模式 · 方案已生成"
+                ? "本地智能模式 · 等待补充信息"
+                : "本地智能模式 · 方案已生成"
             );
           } else {
             setApiStatus(
@@ -6871,7 +7214,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
             input.value = button.dataset.scenario || "";
             input.dispatchEvent(new Event("input"));
             input.focus();
-            showToast("典型场景问题已填入输入框，可直接发送。", "info");
+            showToast("常用场景问题已填入输入框，可直接发送。", "info");
           });
         });
         messages.addEventListener("click", (event) => {
@@ -7279,15 +7622,6 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
           showToast("消费记录已删除。", "success");
         });
 
-        $("#seed-expenses").addEventListener("click", () => {
-          if (state.expenses.length && !window.confirm("将追加一组包含历史周期的演示消费数据，是否继续？")) return;
-          state.expenses.push(...buildDemoMonthlyExpenses());
-          saveExpenses();
-          localStorage.setItem(STORAGE_KEYS.demoSeeded, "true");
-          renderBudgetPage();
-          showToast("演示消费数据已载入，可切换月份和周度查看。", "success");
-        });
-
         $("#clear-expenses").addEventListener("click", () => {
           if (!state.expenses.length) {
             showToast("当前没有可清空的消费记录。", "info");
@@ -7296,7 +7630,6 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
           if (!window.confirm("确认清空全部消费记录吗？该操作不可撤销。")) return;
           state.expenses = [];
           saveExpenses();
-          localStorage.setItem(STORAGE_KEYS.demoSeeded, "true");
           renderBudgetPage();
           showToast("全部消费记录已清空。", "success");
         });
@@ -7607,7 +7940,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         });
       }
 
-      /** 项目介绍弹窗：首次访问自动展示，也可通过导航栏重复打开。 */
+      /** 项目介绍弹窗：通过导航栏手动打开。 */
       function initProjectIntro() {
         const modal = $("#project-intro-modal");
         const closeButton = $("#project-intro-close");
@@ -7627,14 +7960,13 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         const closeModal = () => {
           modal.classList.remove("is-open");
           document.body.classList.remove("modal-open");
-          localStorage.setItem(STORAGE_KEYS.projectIntroSeen, "true");
           hideTimer = window.setTimeout(() => modal.classList.add("hidden"), 220);
         };
 
         $("#project-intro-button").addEventListener("click", openModal);
         closeButton.addEventListener("click", closeModal);
         backdrop.addEventListener("click", closeModal);
-        $("#intro-start-demo").addEventListener("click", closeModal);
+        $("#intro-start-app").addEventListener("click", closeModal);
         $("#intro-view-scenarios").addEventListener("click", () => {
           closeModal();
           showPage("chat");
@@ -7646,10 +7978,6 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         document.addEventListener("keydown", (event) => {
           if (event.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
         });
-
-        if (readStorageValue(STORAGE_KEYS.projectIntroSeen, LEGACY_STORAGE_KEYS.projectIntroSeen) !== "true") {
-          window.setTimeout(openModal, 900);
-        }
       }
 
       function hidePageLoader() {
@@ -7662,6 +7990,12 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
       }
 
       function initApp() {
+        if (appInitialized) return;
+        if (!activeUser) {
+          showAuthGate();
+          return;
+        }
+        appInitialized = true;
         loadPersistedState();
         initApiConfiguration();
         initializeExecutionMode();
@@ -7681,7 +8015,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
         showToast("页面发生异常，请刷新后重试。", "error");
       });
 
-      initApp();
+      initAuth();
     })();
   </script>
 </body>
@@ -7698,10 +8032,13 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
 
 ## 项目简介
 
-全场景生活消费决策智能体是面向全国人工智能应用创新大赛的 AI Agent 演示项目。项目以个人与家庭的真实生活消费场景为核心，通过自然语言理解、OpenAI Function Calling、多平台商品与服务检索、优惠规则计算和预算分析，为用户生成可解释、可执行、可复盘的消费方案。
+全场景生活消费决策智能体是面向个人与家庭生活消费场景的 AI Agent 应用。项目通过自然语言理解、OpenAI Function Calling、多平台商品与服务检索、优惠规则计算和预算分析，为用户生成可解释、可执行、可复盘的消费方案。
 
 主要功能：
 
+- 登录与注册：通过网址进入后必须先登录，支持创建个人账号
+- 账号数据隔离：不同账号的预算、消费记录、复盘数据和对话分别保存
+- 退出与恢复：退出登录不会删除个人数据，重新登录后自动恢复
 - 全场景咨询：覆盖餐饮美食、商超日用、家居生活、数码家电、服饰鞋包、健康医疗、交通出行、教育学习、文体娱乐、亲子宠物、旅游住宿、本地服务和礼品文创等场景
 - 组合场景规划：支持家庭采购、周末出游、租房改善、健康关怀、通勤出行、约会亲子和送礼等跨品类需求
 - 智能咨询：自然语言需求理解、模糊需求主动追问、多轮方案修改
@@ -7710,10 +8047,9 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
 - 优惠计算：匹配最优满减、会员权益、平台优惠和凑单方案
 - 预算管理：按月/周独立设置预算，支持历史月份与周度切换、消费记录、剩余额度与超支提醒
 - 消费复盘：与预算管理同步，支持当月、本周及历史月份/周度的分类结构、预算总结和消费优化建议
-- 本地持久化：对话历史、预算和消费记录保存在 LocalStorage
-- 比赛演示：项目介绍弹窗、典型场景测试、默认月度演示数据
+- 本地持久化：账号及个人数据按用户隔离保存在当前浏览器 LocalStorage
 - 网址分享：Flask 同源托管页面与接口，支持一键复制网址、局域网访问和 Render/Docker 公网部署
-- 零配置运行：直接打开 `index.html` 即可使用内置本地演示 Agent
+- 零配置运行：直接打开 `index.html` 即可使用内置本地智能引擎
 
 ## 最快使用方式：无需部署
 
@@ -7723,7 +8059,7 @@ CAMPUS_MERCHANTS = LIFE_MERCHANTS
 index.html
 ```
 
-页面会自动启用“本地演示模式”，无需安装 Python、无需运行 Flask、无需填写 OpenAI API Key。内置生活消费商品、服务、优惠规则、组合场景算法、对话追问和方案修改均在浏览器本地完成。
+页面会先展示登录/注册界面。注册并登录后，即使无需安装 Python、无需运行 Flask、无需填写 OpenAI API Key，也能使用内置生活消费商品、服务、优惠规则、组合场景算法、对话追问和方案修改。
 
 完整 Flask + OpenAI Agent 后端仍然保留，可在需要真实模型能力时选择性启动。启动 Flask 后可直接通过 `http://127.0.0.1:5000` 使用完整页面，无需再单独打开 `index.html`。
 
@@ -7763,7 +8099,7 @@ https://life-wallet-ai.onrender.com
 
 7. 将网址发送给其他人即可直接访问。页面右上角的“分享网址”按钮可一键复制当前公网地址。
 
-即使暂未配置 `OPENAI_API_KEY`，部署后的页面仍可使用内置本地演示 Agent；配置密钥后可使用完整大模型 Agent 能力。
+即使暂未配置 `OPENAI_API_KEY`，部署后的页面仍可使用内置本地智能引擎；配置密钥后可使用完整大模型 Agent 能力。
 
 ### 方式三：Docker 部署
 
@@ -8043,7 +8379,7 @@ def chat_with_agent():
 
 ## 说明
 
-本项目中的商品、服务、价格、优惠规则、商户和演示消费记录均为模拟数据，仅用于比赛展示和功能演示，不代表真实平台价格、库存、服务范围或实时优惠。
+本项目中的商品、服务、价格、优惠规则和商户均为模拟数据，仅用于功能体验，不代表真实平台价格、库存、服务范围或实时优惠。
 ````
 
 
@@ -8052,7 +8388,7 @@ def chat_with_agent():
 ````markdown
 # 全场景生活消费决策智能体 - 操作启动说明书
 
-**适用项目：** 全国人工智能应用创新大赛参赛作品  
+**适用项目：** 个人与家庭生活消费决策应用  
 **文档版本：** V1.2  
 **适用系统：** Windows 10 / Windows 11  
 **项目目录：** `C:\Users\S\Desktop\人工智能大赛`  
@@ -8062,11 +8398,11 @@ def chat_with_agent():
 
 ## 一、说明书用途
 
-本说明书用于指导参赛成员、演示人员和评审人员使用项目。
+本说明书用于指导用户安装、登录和使用项目。
 
-**推荐使用方式：直接双击 `index.html`。**
+**使用方式：通过网址进入项目，先注册或登录，再使用个人消费数据。**
 
-页面会自动启用本地演示模式，无需安装 Python、无需启动 Flask、无需填写 OpenAI API Key，即可体验智能咨询、商品推荐、优惠计算、预算管理和消费复盘。
+页面会先显示登录/注册界面。登录后即可使用智能咨询、商品推荐、优惠计算、预算管理和消费复盘。本地智能模式无需安装 Python、无需启动 Flask、无需填写 OpenAI API Key。
 
 Flask + OpenAI 后端仍然完整保留，仅在需要真实大模型 Agent 能力时选择性启动。
 
@@ -8074,7 +8410,7 @@ Flask + OpenAI 后端仍然完整保留，仅在需要真实大模型 Agent 能�
 
 1. 零配置直接打开前端的方法
 2. 可选后端模式的安装与启动方法
-3. 功能演示流程
+3. 登录与功能使用流程
 4. 常见问题排查方法
 
 ---
@@ -8149,7 +8485,7 @@ index.html
 页面右上角状态显示：
 
 ```text
-本地演示模式 · 无需后端
+本地智能模式 · 无需后端
 ```
 
 此时无需安装任何软件。内置 Agent 已包含：
@@ -8199,7 +8535,7 @@ https://life-wallet-ai.onrender.com
 6. 将该网址发送给其他人，即可直接在浏览器中进入项目。
 7. 页面右上角的“分享网址”按钮可一键复制当前访问地址。
 
-未配置 OpenAI API Key 时，网址页面仍可使用内置本地演示 Agent。
+未配置 OpenAI API Key 时，网址页面仍可使用内置本地智能引擎。
 
 ### 可选后端第一步：运行 setup.bat
 
@@ -8317,18 +8653,21 @@ http://127.0.0.1:5000/health
 
 ## 六、前端功能操作说明
 
-### 1. 项目介绍弹窗
+### 1. 登录与注册
 
-首次打开页面会自动展示项目介绍，包含：
+通过网址首次进入项目时，必须先完成登录或注册。
 
-- 项目背景
-- 核心痛点
-- Agent 能力
-- 适用人群
+- 注册需要填写昵称、邮箱和至少 6 位密码
+- 密码使用加盐哈希保存在浏览器中，不保存明文密码
+- 不同账号的预算、消费记录、复盘数据和对话分别存放
+- 退出登录不会删除数据，重新登录后会自动恢复该账号的数据
+- 账号数据仅保存在当前浏览器；清除浏览器站点数据会同时删除本机账号
 
-关闭后可通过顶部导航中的“作品介绍”按钮重新打开。
+### 2. 项目介绍
 
-### 2. 智能咨询
+登录后可通过顶部导航中的“项目介绍”按钮手动打开项目说明。
+
+### 3. 智能咨询
 
 在输入框中填写消费需求，例如：
 
@@ -8336,14 +8675,7 @@ http://127.0.0.1:5000/health
 预算1000元，帮我安排一个周末周边游，包含吃住行
 ```
 
-点击“发送”后，系统会：
-
-1. 调用后端 Agent 接口
-2. 自动解析预算、品类和场景
-3. 调用商品搜索与优惠计算工具
-4. 在右侧生成 2–3 套消费方案
-
-如需求信息不足，Agent 会主动追问预算、品类或使用场景。
+点击“发送”后，系统会解析预算、品类和场景，并生成 2–3 套消费方案。
 
 用户还可以继续修改方案，例如：
 
@@ -8353,9 +8685,9 @@ http://127.0.0.1:5000/health
 预算降到100元
 ```
 
-### 3. 典型场景测试
+### 4. 常用生活场景
 
-对话区域提供五个生活消费演示快捷场景：
+对话区域提供五个常用生活消费快捷场景：
 
 - 一家三口本周生活采购预算500元，帮我分配并推荐商品
 - 预算1000元，帮我安排一个周末周边游，包含吃住行
@@ -8363,9 +8695,9 @@ http://127.0.0.1:5000/health
 - 给父母买200元以内的健康用品，注重实用
 - 每天通勤，预算100元，帮我选交通方案并规划月度支出
 
-点击后会自动填入输入框，不会自动发送，便于演示人员讲解后手动提交。
+点击后会自动填入输入框，不会自动发送。
 
-### 4. 预算管理
+### 5. 预算管理
 
 进入“预算管理”页面后可进行：
 
@@ -8374,13 +8706,12 @@ http://127.0.0.1:5000/health
 - 回看近 24 个月或 26 周；更早的有记录周期会自动加入列表
 - 为每个月份或周度单独设置并保存预算
 - 查看所选周期的支出、剩余额度、使用率和超支提示
-- 新增、删除消费记录
-- 清空全部记录或载入包含历史周期的演示数据
+- 新增、删除当前账号的消费记录
 - 一键回到当前月份或本周
 
-预算、各周期预算和消费记录保存在浏览器 LocalStorage 中。
+预算、各周期预算和消费记录均按当前登录账号独立保存。
 
-### 5. 消费复盘
+### 6. 消费复盘
 
 进入“消费复盘”页面后可查看：
 
@@ -8390,24 +8721,22 @@ http://127.0.0.1:5000/health
 - 所选周期的预算使用状态和剩余额度
 - 所选周期的消费分类饼图与分类明细
 - 根据所选周期自动生成的总结、消费结构和行动建议
-- 一键切换到上一周期、下一周期、当前周期，或通过下拉列表选择历史周期
 
-首次使用时会自动载入一组覆盖当前与历史周期的演示消费数据。
+新账号默认没有消费数据，添加记录后即可生成个人复盘分析。
 
 ---
 
-## 七、典型比赛演示流程
+## 七、完整使用流程
 
-建议按照以下顺序进行演示：
+建议按照以下顺序使用：
 
-1. 打开项目介绍弹窗，介绍项目背景、痛点和 Agent 能力。
-2. 点击“查看典型场景”，进入智能咨询页面。
-3. 选择“预算1000元，帮我安排一个周末周边游，包含吃住行”并发送。
-4. 讲解右侧方案卡片中的商品或预算清单、总价和推荐理由。
-5. 继续输入“再便宜一点”，展示多轮方案修改能力。
-6. 进入预算管理页，展示预算、消费记录和删除功能。
-7. 进入消费复盘页，切换当月、本周或历史周期，展示分类饼图、预算状态和周期优化建议。
-8. 打开 `/health` 页面，展示后端服务与配置状态。
+1. 打开在线网址或本地网页地址。
+2. 注册个人账号并登录。
+3. 进入智能咨询页面，输入预算、场景和消费偏好。
+4. 在预算管理中设置月度或周度预算，并添加消费记录。
+5. 在消费复盘页面查看当周、当月或历史周期分析。
+6. 退出登录后使用同一账号重新登录，确认个人预算、消费和对话数据保持不变。
+7. 切换其他账号，确认不同账号之间的数据互不影响。
 
 ---
 
@@ -8552,22 +8881,20 @@ https://cdn.tailwindcss.com
 
 ---
 
-## 十一、演示数据重置
+## 十一、账号与数据重置
 
-如需重新展示首次弹窗和默认月度消费数据，可在浏览器开发者工具控制台执行：
+如需清除当前浏览器中的全部账号和个人数据，可在浏览器开发者工具控制台执行：
 
 ```javascript
-localStorage.removeItem("life-agent-project-intro-seen");
-localStorage.removeItem("life-agent-demo-seeded");
-localStorage.removeItem("life-agent-expenses");
-localStorage.removeItem("life-agent-chat-history");
+localStorage.clear();
 location.reload();
 ```
 
 注意：
 
-- 以上操作会清除本地对话、预算演示数据和消费记录
-- 不会删除后端代码或 API 配置
+- 该操作会删除当前浏览器中的全部账号、预算、消费记录、复盘数据和对话
+- 不会删除 GitHub 仓库、后端代码或云端部署
+- 如果只想清理某一个账号，可删除以 `life-agent-user:用户ID:` 开头的存储项
 
 ---
 
@@ -8578,7 +8905,9 @@ location.reload();
 - 本项目已提供 `render.yaml`、`Dockerfile` 和 `Procfile` 用于云端部署
 - 正式部署使用 Gunicorn，并自动读取平台注入的 `PORT`
 - 页面和 API 使用同源地址，避免部署后误请求访问者本机
-- 项目中的商品、服务、价格、优惠和消费记录均为模拟数据
+- 用户密码使用 PBKDF2 加盐哈希保存，不存储明文密码
+- 账号数据按用户 ID 分区保存在当前浏览器中
+- 项目中的商品、服务、价格和优惠规则均为模拟数据
 
 ---
 
@@ -8603,11 +8932,14 @@ location.reload();
 - [ ] 已双击运行 `start.bat`
 - [ ] `/health` 返回 HTTP 200
 - [ ] 已打开 `http://127.0.0.1:5000`
-- [ ] 页面显示本地演示或后端已连接状态
-- [ ] 已完成一次典型场景测试
+- [ ] 已完成账号注册并成功登录
+- [ ] 页面显示本地智能或后端已连接状态
+- [ ] 已完成一次常用生活场景咨询
+- [ ] 已添加消费记录并完成一次周期复盘
+- [ ] 已验证退出后重新登录个人数据仍然保留
 - [ ] 局域网分享时已获取终端显示的局域网地址
 - [ ] 公网分享时已完成 Render 或 Docker 部署并获得 HTTPS 网址
 
-完成以上步骤后，项目即可进入比赛演示状态。
+完成以上步骤后，项目即可正常使用。
 ````
 

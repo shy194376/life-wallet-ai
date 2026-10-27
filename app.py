@@ -321,5 +321,5 @@ app = create_app()
 if __name__ == "__main__":
     # 云平台通常会注入 PORT；本地默认仍使用 5000。
     server_port = int(os.getenv("PORT", "5000"))
-    # 监听 0.0.0.0 便于本机、局域网和容器环境访问；比赛演示关闭 debug。
+    # 监听 0.0.0.0 便于本机、局域网和容器环境访问；生产环境关闭 debug。
     app.run(host="0.0.0.0", port=server_port, debug=False)
