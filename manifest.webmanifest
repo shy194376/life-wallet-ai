@@ -1,0 +1,19 @@
+{
+  "name": "全场景生活消费决策智能体",
+  "short_name": "Life Wallet AI",
+  "description": "DeepSeek 驱动的全场景生活消费决策、预算管理与消费复盘应用。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

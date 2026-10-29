@@ -5,11 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="全场景生活消费决策智能体：智能咨询、预算管理与消费复盘。" />
   <title>全场景生活消费决策智能体</title>
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="assets/app-icon.svg" />
 
-  <!-- 单文件页面使用 Tailwind Play CDN；业务 CSS 和全部 JavaScript 均内嵌。 -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 部署后只需在这里配置一次后端 API 地址，终端用户无需再配置。 -->
+  <script src="runtime-config.js"></script>
+
+  <!-- Tailwind 与密码哈希兼容库均使用本地资源，避免 CDN 故障导致页面崩溃。 -->
+  <script src="assets/tailwindcss.js"></script>
+  <script src="assets/crypto-js.min.js"></script>
   <script>
-    tailwind.config = {
+    if (window.tailwind) {
+      tailwind.config = {
       theme: {
         extend: {
           colors: {
@@ -28,7 +36,8 @@
           }
         }
       }
-    };
+      };
+    }
   </script>
 
   <style>
@@ -249,6 +258,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">Account Access</p>
             <h2 id="auth-title" class="mt-2 text-2xl font-black tracking-tight text-slate-900">登录后开始使用</h2>
             <p class="mt-2 text-sm leading-6 text-slate-500">账号与个人数据保存在当前浏览器中，请使用自己的账号登录。</p>
+            <p id="auth-security-hint" class="mt-2 hidden rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-5 text-amber-700">当前通过非 HTTPS 地址访问，登录将使用本地兼容加密模式。公网使用时建议改用 HTTPS 地址。</p>
 
             <div class="mt-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="登录或注册">
               <button id="auth-login-tab" type="button" class="auth-tab active rounded-lg px-3 py-2 text-sm font-bold" role="tab" aria-selected="true" data-auth-mode="login">登录</button>
@@ -312,7 +322,7 @@
   <!-- 全局消息提示容器 -->
   <div id="toast-container" class="fixed right-4 top-4 z-[100] flex flex-col gap-2" aria-live="polite"></div>
 
-  <!-- 顶部导航：三个页面通过原生 JavaScript 切换，不刷新页面 -->
+  <!-- 顶部导航：四个页面通过原生 JavaScript 切换，不刷新页面 -->
   <header class="sticky top-0 z-40 border-b border-white/70 bg-white/80 backdrop-blur-xl">
     <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
       <a href="#chat" class="group flex items-center gap-3" aria-label="返回智能咨询首页">
@@ -332,13 +342,14 @@
         <button type="button" class="nav-tab active inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4" data-page="chat">智能咨询</button>
         <button type="button" class="nav-tab inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4" data-page="budget">预算管理</button>
         <button type="button" class="nav-tab inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4" data-page="review">消费复盘</button>
+        <button type="button" class="nav-tab inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 sm:px-4" data-page="profile">我的</button>
         <button id="project-intro-button" type="button" class="ml-1 whitespace-nowrap rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">项目介绍</button>
         <button id="share-project-button" type="button" class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100" title="复制项目网址">
           <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 12.75 7.5 13.5a3.18 3.18 0 0 1-4.5-4.5l3-3a3.18 3.18 0 0 1 4.5 0m5.25 5.25.75-.75a3.18 3.18 0 0 1 4.5 4.5l-3 3a3.18 3.18 0 0 1-4.5 0M8.25 15.75l7.5-7.5" /></svg>
           <span>分享网址</span>
         </button>
         <div class="ml-1 flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1.5">
-          <span id="current-user-name" class="max-w-[90px] truncate px-1 text-xs font-bold text-slate-700">账号</span>
+          <button id="current-user-name" type="button" class="max-w-[90px] truncate rounded-lg px-1 py-1 text-xs font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700" title="查看我的页面">账号</button>
           <button id="logout-button" type="button" class="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-400 transition hover:bg-red-50 hover:text-red-500">退出</button>
         </div>
       </nav>
@@ -397,7 +408,7 @@
                 <input id="api-base-url" type="url" class="min-w-0 flex-1 rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-400" value="" placeholder="自动使用当前网站地址" />
                 <button id="save-api-url" type="button" class="rounded-xl bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">保存</button>
               </div>
-              <p id="api-mode-hint" class="mt-2 text-[11px] leading-5 text-blue-600/80">通过网址访问时自动使用当前网站的同源后端；直接打开本地文件时使用本地智能模式。</p>
+              <p id="api-mode-hint" class="mt-2 text-[11px] leading-5 text-blue-600/80">智能咨询默认固定使用 DeepSeek；只有显式设置 ALLOW_LOCAL_FALLBACK=true 时才允许本地应急引擎。</p>
             </div>
           </div>
 
@@ -410,7 +421,7 @@
               </div>
               <div class="max-w-[86%]">
                 <div class="rounded-2xl rounded-tl-md border border-slate-100 bg-white px-4 py-3 text-sm leading-6 text-slate-700 shadow-sm">
-                  您好，我是全场景生活消费决策智能体。请说明预算、目标品类、使用场景与偏好，我将调用商品检索和优惠计算工具生成可执行方案；如关键信息不足，我会先向您确认必要条件。
+                  您好，我是全场景生活消费决策智能体。你可以一次提出多个消费问题，我会逐条回答并为不同问题生成不同方案；预算或品类暂缺时，我也会先给带明确假设的可执行建议。
                 </div>
                 <p class="mt-1.5 text-[10px] text-slate-400">刚刚</p>
               </div>
@@ -452,7 +463,7 @@
 
             <form id="chat-form" class="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 transition focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-md focus-within:shadow-blue-100/50">
               <label for="chat-input" class="sr-only">输入消费问题</label>
-              <textarea id="chat-input" rows="1" maxlength="2000" class="max-h-32 min-h-[44px] flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-6 text-slate-700 outline-none placeholder:text-slate-400" placeholder="描述预算、消费场景和偏好，例如：1000元安排周末周边游，Enter 发送"></textarea>
+              <textarea id="chat-input" rows="1" maxlength="2000" class="max-h-32 min-h-[44px] flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-6 text-slate-700 outline-none placeholder:text-slate-400" placeholder="可一次问多个问题，例如：200元推荐耳机，500元周末约会怎么安排，Enter 发送"></textarea>
               <button id="send-button" type="submit" class="primary-button inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-white" aria-label="发送消息">
                 <span id="send-label">发送</span>
                 <svg id="send-icon" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -773,6 +784,124 @@
         </section>
       </div>
     </section>
+    <!-- ==================== 我的页面 ==================== -->
+    <section id="profile-page" class="page-section hidden" data-page-section="profile">
+      <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.22em] text-blue-500">My Account</p>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">我的</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-500">查看当前登录账号的个人信息、数据概览和本地存储状态。</p>
+        </div>
+        <span class="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+          <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+          账号数据仅存于当前浏览器
+        </span>
+      </div>
+
+      <div class="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+        <section class="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm">
+          <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 px-6 py-7 text-white">
+            <div class="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10"></div>
+            <div class="pointer-events-none absolute -bottom-16 right-20 h-32 w-32 rounded-full bg-cyan-200/10"></div>
+            <div class="relative flex items-center gap-4">
+              <div id="profile-avatar" class="grid h-20 w-20 shrink-0 place-items-center rounded-3xl border border-white/30 bg-white/20 text-2xl font-black shadow-xl shadow-blue-900/20 backdrop-blur-sm">我</div>
+              <div class="min-w-0">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-100">Personal Profile</p>
+                <h3 id="profile-display-name" class="mt-1 truncate text-2xl font-black tracking-tight">当前用户</h3>
+                <p id="profile-email" class="mt-1 truncate text-sm text-blue-100">未读取到邮箱</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 sm:p-6">
+            <div class="grid gap-3 sm:grid-cols-2">
+              <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">账号编号</p>
+                <p id="profile-account-id" class="mt-2 break-all text-xs font-semibold leading-5 text-slate-700">—</p>
+              </div>
+              <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">注册时间</p>
+                <p id="profile-created-at" class="mt-2 text-sm font-semibold text-slate-700">—</p>
+              </div>
+              <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">资料更新</p>
+                <p id="profile-updated-at" class="mt-2 text-sm font-semibold text-slate-700">未修改</p>
+              </div>
+              <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">账号类型</p>
+                <p class="mt-2 text-sm font-semibold text-slate-700">本地个人账号</p>
+              </div>
+            </div>
+
+            <form id="profile-form" class="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4" novalidate>
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-sm font-black text-slate-900">编辑昵称</h3>
+                  <p class="mt-1 text-xs leading-5 text-slate-500">昵称会同步显示在顶部导航和当前账号资料中。</p>
+                </div>
+                <span class="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-blue-600">本地保存</span>
+              </div>
+              <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+                <input id="profile-name-input" type="text" required maxlength="20" autocomplete="nickname" class="min-w-0 flex-1 rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100" placeholder="请输入昵称" />
+                <button id="profile-save-name" type="submit" class="primary-button shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold text-white">保存昵称</button>
+              </div>
+              <p id="profile-name-error" class="mt-2 hidden rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-600" role="alert"></p>
+            </form>
+          </div>
+        </section>
+
+        <div class="space-y-5">
+          <section class="soft-card rounded-3xl p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-500">Data Overview</p>
+                <h3 class="mt-1 text-lg font-black text-slate-900">我的数据概览</h3>
+              </div>
+              <span id="profile-period-badge" class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">当前月度</span>
+            </div>
+            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+                <p id="profile-budget-label" class="text-xs font-semibold text-slate-500">当前预算</p>
+                <p id="profile-budget" class="mt-2 text-2xl font-black tracking-tight text-blue-700">未设置</p>
+              </div>
+              <div class="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4">
+                <p class="text-xs font-semibold text-slate-500">当前周期已消费</p>
+                <p id="profile-spent" class="mt-2 text-2xl font-black tracking-tight text-amber-700">¥0.00</p>
+              </div>
+              <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+                <p class="text-xs font-semibold text-slate-500">当前周期消费记录</p>
+                <p id="profile-expense-count" class="mt-2 text-2xl font-black tracking-tight text-emerald-700">0 笔</p>
+              </div>
+              <div class="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4">
+                <p class="text-xs font-semibold text-slate-500">累计咨询次数</p>
+                <p id="profile-chat-count" class="mt-2 text-2xl font-black tracking-tight text-violet-700">0 次</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="soft-card rounded-3xl p-5 sm:p-6">
+            <div class="flex items-start gap-3">
+              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-600">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3.75 4.5 7.5v4.75c0 4.4 3.05 7.15 7.5 8 4.45-.85 7.5-3.6 7.5-8V7.5L12 3.75Z" /><path stroke-linecap="round" stroke-linejoin="round" d="m9 12 2 2 4-4" /></svg>
+              </span>
+              <div>
+                <h3 class="text-lg font-black text-slate-900">账号与隐私</h3>
+                <p class="mt-1 text-xs leading-5 text-slate-500">密码以加盐哈希保存，页面不会展示密码或密码哈希。预算、消费记录和对话历史均按当前账号隔离。</p>
+              </div>
+            </div>
+            <div class="mt-5 flex flex-wrap gap-2">
+              <button id="profile-export-data" type="button" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100">导出数据备份</button>
+              <label for="profile-import-data" class="cursor-pointer rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-100">导入数据备份</label>
+              <input id="profile-import-data" type="file" accept="application/json,.json" class="hidden" />
+              <button id="profile-logout-button" type="button" class="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-100">退出当前账号</button>
+              <button id="profile-back-to-chat" type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">返回智能咨询</button>
+            </div>
+            <p class="mt-4 rounded-xl bg-slate-50 px-3 py-2.5 text-[11px] leading-5 text-slate-400">导出的备份包含当前账号的预算、消费记录和对话，不包含密码。浏览器主动清除站点数据时，可使用备份文件恢复；建议长期使用前先导出一次。</p>
+          </section>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ==================== 作品说明 ==================== -->
@@ -908,6 +1037,7 @@
       "use strict";
 
       const AUTH_USERS_KEY = "life-agent-auth-users-v1";
+      const AUTH_USERS_BACKUP_KEY = "life-agent-auth-users-v1:backup";
       const AUTH_SESSION_KEY = "life-agent-auth-session-v1";
       const AUTH_MIGRATION_KEY = "life-agent-legacy-migration-owner";
       const USER_STORAGE_NAMESPACE = "life-agent-user";
@@ -935,10 +1065,11 @@
       const DEFAULT_BUDGETS = { monthly: 0, weekly: 0 };
       let activeUser = null;
       let appInitialized = false;
+      let executionModeMonitorTimer = null;
       const IS_FILE_MODE = window.location.protocol === "file:";
-      const DEFAULT_API_BASE_URL = IS_FILE_MODE
-        ? "http://127.0.0.1:5000"
-        : window.location.origin;
+      const CONFIGURED_API_BASE_URL = String(window.LIFE_WALLET_CONFIG?.apiBaseUrl || "").trim();
+      const DEFAULT_API_BASE_URL = CONFIGURED_API_BASE_URL
+        || (IS_FILE_MODE ? "http://127.0.0.1:5000" : window.location.origin);
       const REQUEST_TIMEOUT_MS = 60000;
       const API_ENDPOINTS = { chat: "/api/agent/chat" };
       const CATEGORY_COLORS = {
@@ -1026,29 +1157,41 @@
         }
       ];
       const LOCAL_CATEGORY_SWAPS = {
-        "餐饮美食": "商超日用",
-        "数码配件": "数码家电",
-        "数码家电": "家居生活",
-        "礼品文创": "健康医疗",
-        "健康医疗": "文体娱乐",
-        "美妆个护": "服饰鞋包",
-        "生活用品": "家居生活",
-        "家居生活": "商超日用",
-        "零食饮料": "餐饮美食",
-        "服饰鞋包": "生活用品",
-        "交通出行": "旅游住宿",
-        "教育学习": "文体娱乐",
-        "文体娱乐": "旅游住宿",
-        "亲子宠物": "生活用品",
-        "旅游住宿": "文体娱乐",
-        "本地服务": "家居生活",
-        "商超日用": "生活用品"
+        "餐饮美食": ["商超日用", "零食饮料", "生活用品"],
+        "数码配件": ["数码家电", "家居生活", "文体娱乐"],
+        "数码家电": ["家居生活", "数码配件", "生活用品"],
+        "礼品文创": ["健康医疗", "文体娱乐", "美妆个护"],
+        "健康医疗": ["文体娱乐", "生活用品", "礼品文创"],
+        "美妆个护": ["服饰鞋包", "生活用品", "礼品文创"],
+        "生活用品": ["家居生活", "商超日用", "数码配件"],
+        "家居生活": ["生活用品", "数码家电", "商超日用"],
+        "零食饮料": ["餐饮美食", "商超日用", "生活用品"],
+        "服饰鞋包": ["美妆个护", "生活用品", "数码配件"],
+        "交通出行": ["旅游住宿", "文体娱乐", "餐饮美食"],
+        "教育学习": ["文体娱乐", "数码配件", "生活用品"],
+        "文体娱乐": ["旅游住宿", "餐饮美食", "生活用品"],
+        "亲子宠物": ["文体娱乐", "生活用品", "餐饮美食"],
+        "旅游住宿": ["文体娱乐", "餐饮美食", "交通出行"],
+        "本地服务": ["家居生活", "生活用品", "商超日用"],
+        "商超日用": ["生活用品", "餐饮美食", "家居生活"]
+      };
+      const LOCAL_DEFAULT_BUDGETS = {
+        "餐饮美食": 100, "零食饮料": 80, "商超日用": 200, "生活用品": 150,
+        "家居生活": 600, "数码配件": 200, "数码家电": 800, "服饰鞋包": 400,
+        "美妆个护": 200, "健康医疗": 300, "交通出行": 300, "教育学习": 500,
+        "文体娱乐": 300, "亲子宠物": 300, "旅游住宿": 1000, "本地服务": 400,
+        "礼品文创": 300
       };
 
       const state = {
         activePage: "chat",
         apiBaseUrl: DEFAULT_API_BASE_URL,
         executionMode: "detecting",
+        llmProvider: "deepseek",
+        llmModel: "deepseek-flash",
+        deepseekConnected: false,
+        deepseekConnecting: false,
+        localFallbackEnabled: false,
         isSending: false,
         budgetPeriod: "monthly",
         budgets: { ...DEFAULT_BUDGETS, periods: {} },
@@ -1109,45 +1252,140 @@
         return bytesToHex(bytes);
       }
 
-      async function derivePasswordHash(password, salt) {
-        if (!window.crypto?.subtle) {
-          throw new Error("当前浏览器不支持安全登录，请使用 HTTPS 或 localhost 访问。");
+      const PASSWORD_HASH_ITERATIONS = 120000;
+
+      function derivePasswordHashSynchronously(password, salt) {
+        if (!window.CryptoJS?.PBKDF2) {
+          throw new Error("密码加密组件未加载，请刷新页面后重试。");
         }
-        const encoder = new TextEncoder();
-        const keyMaterial = await window.crypto.subtle.importKey(
-          "raw",
-          encoder.encode(password),
-          "PBKDF2",
-          false,
-          ["deriveBits"]
-        );
-        const bits = await window.crypto.subtle.deriveBits(
-          {
-            name: "PBKDF2",
-            salt: encoder.encode(salt),
-            iterations: 120000,
-            hash: "SHA-256"
-          },
-          keyMaterial,
-          256
-        );
-        return bytesToHex(new Uint8Array(bits));
+        return CryptoJS.PBKDF2(password, CryptoJS.enc.Utf8.parse(salt), {
+          keySize: 256 / 32,
+          iterations: PASSWORD_HASH_ITERATIONS,
+          hasher: CryptoJS.algo.SHA256
+        }).toString(CryptoJS.enc.Hex);
+      }
+
+      function derivePasswordHashWithWorker(password, salt) {
+        return new Promise((resolve, reject) => {
+          let worker = null;
+          let settled = false;
+          let timeoutId = null;
+
+          const finish = (callback, value) => {
+            if (settled) return;
+            settled = true;
+            if (timeoutId) window.clearTimeout(timeoutId);
+            if (worker) worker.terminate();
+            callback(value);
+          };
+
+          const fallbackToSynchronousHash = () => {
+            try {
+              finish(resolve, derivePasswordHashSynchronously(password, salt));
+            } catch (error) {
+              finish(reject, error);
+            }
+          };
+
+          try {
+            worker = new Worker("assets/password-worker.js");
+          } catch (error) {
+            fallbackToSynchronousHash();
+            return;
+          }
+
+          timeoutId = window.setTimeout(() => {
+            console.warn("密码哈希 Worker 超时，切换到同步兼容模式");
+            fallbackToSynchronousHash();
+          }, 30000);
+
+          worker.onmessage = (event) => {
+            const payload = event.data || {};
+            if (payload.error) {
+              fallbackToSynchronousHash();
+              return;
+            }
+            if (typeof payload.hash === "string" && payload.hash) {
+              finish(resolve, payload.hash);
+            } else {
+              fallbackToSynchronousHash();
+            }
+          };
+          worker.onerror = (event) => {
+            console.warn("密码哈希 Worker 加载失败", event.message || event);
+            fallbackToSynchronousHash();
+          };
+          worker.postMessage({
+            password,
+            salt,
+            iterations: PASSWORD_HASH_ITERATIONS
+          });
+        });
+      }
+
+      async function derivePasswordHash(password, salt) {
+        if (window.crypto?.subtle) {
+          const encoder = new TextEncoder();
+          const keyMaterial = await window.crypto.subtle.importKey(
+            "raw",
+            encoder.encode(password),
+            "PBKDF2",
+            false,
+            ["deriveBits"]
+          );
+          const bits = await window.crypto.subtle.deriveBits(
+            {
+              name: "PBKDF2",
+              salt: encoder.encode(salt),
+              iterations: PASSWORD_HASH_ITERATIONS,
+              hash: "SHA-256"
+            },
+            keyMaterial,
+            256
+          );
+          return bytesToHex(new Uint8Array(bits));
+        }
+        return derivePasswordHashWithWorker(password, salt);
+      }
+
+      function parseAuthUsers(rawValue) {
+        const users = JSON.parse(rawValue || "[]");
+        if (!Array.isArray(users)) throw new Error("账号数据不是数组");
+        return users.filter((user) => user && user.id && user.email && user.passwordHash && user.salt);
       }
 
       function readAuthUsers() {
         try {
-          const users = JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || "[]");
-          return Array.isArray(users)
-            ? users.filter((user) => user && user.id && user.email && user.passwordHash && user.salt)
-            : [];
+          return parseAuthUsers(localStorage.getItem(AUTH_USERS_KEY) || "[]");
         } catch (error) {
-          console.warn("读取账号数据失败", error);
+          console.warn("读取账号数据失败，尝试恢复最近一次有效备份", error);
+          try {
+            const backup = localStorage.getItem(AUTH_USERS_BACKUP_KEY);
+            if (backup) {
+              const users = parseAuthUsers(backup);
+              localStorage.setItem(AUTH_USERS_KEY, backup);
+              showToast("已从本地备份恢复账号数据。", "info");
+              return users;
+            }
+          } catch (backupError) {
+            console.warn("账号备份恢复失败", backupError);
+          }
           return [];
         }
       }
 
       function writeAuthUsers(users) {
-        localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+        const serialized = JSON.stringify(users);
+        const previous = localStorage.getItem(AUTH_USERS_KEY);
+        if (previous) {
+          try {
+            parseAuthUsers(previous);
+            localStorage.setItem(AUTH_USERS_BACKUP_KEY, previous);
+          } catch (error) {
+            console.warn("旧账号数据无效，跳过备份", error);
+          }
+        }
+        localStorage.setItem(AUTH_USERS_KEY, serialized);
       }
 
       function configureUserStorage(userId) {
@@ -1225,6 +1463,11 @@
         state.activePage = "chat";
         state.apiBaseUrl = DEFAULT_API_BASE_URL;
         state.executionMode = "detecting";
+        state.llmProvider = "deepseek";
+        state.llmModel = "deepseek-flash";
+        state.deepseekConnected = false;
+        state.deepseekConnecting = true;
+        state.localFallbackEnabled = false;
         state.isSending = false;
         state.budgetPeriod = "monthly";
         state.budgets = { ...DEFAULT_BUDGETS, periods: {} };
@@ -1246,6 +1489,11 @@
       }
 
       function initAuth() {
+        const securityHint = $("#auth-security-hint");
+        if (securityHint && !window.isSecureContext) {
+          securityHint.classList.remove("hidden");
+        }
+
         $$(".auth-tab").forEach((button) => {
           button.addEventListener("click", () => setAuthMode(button.dataset.authMode));
         });
@@ -1263,8 +1511,15 @@
 
           setAuthButtonLoading("#login-submit", true, "正在登录...");
           try {
-            const user = readAuthUsers().find((item) => item.email.toLowerCase() === email);
-            if (!user) throw new Error("账号不存在，请先注册。");
+            const users = readAuthUsers();
+            const user = users.find((item) => item.email.toLowerCase() === email);
+            if (!user) {
+              throw new Error(
+                users.length
+                  ? "当前访问地址下没有此账号。账号仅保存在注册时的浏览器和访问地址中，请改用原地址登录或重新注册。"
+                  : "当前浏览器还没有注册账号，请先切换到“注册”创建账号。"
+              );
+            }
             const passwordHash = await derivePasswordHash(password, user.salt);
             if (passwordHash !== user.passwordHash) throw new Error("密码错误，请重新输入。");
             startAuthenticatedApp(user);
@@ -1360,17 +1615,51 @@
           const rawValue = readStorageValue(key, legacyKey);
           return rawValue ? JSON.parse(rawValue) : fallbackValue;
         } catch (error) {
-          console.warn("读取本地存储失败", error);
+          console.warn("读取本地存储失败，尝试恢复最近一次有效备份", error);
+          try {
+            const backupRaw = localStorage.getItem(`${key}:backup`);
+            if (backupRaw) {
+              const backupValue = JSON.parse(backupRaw);
+              localStorage.setItem(key, backupRaw);
+              showToast("已从本地备份恢复最近一次数据。", "info");
+              return backupValue;
+            }
+          } catch (backupError) {
+            console.warn("本地备份恢复失败", backupError);
+          }
           return fallbackValue;
         }
       }
 
       function writeJsonStorage(key, value) {
         try {
-          localStorage.setItem(key, JSON.stringify(value));
+          const serialized = JSON.stringify(value);
+          const previous = localStorage.getItem(key);
+          if (previous) {
+            try {
+              JSON.parse(previous);
+              localStorage.setItem(`${key}:backup`, previous);
+            } catch (error) {
+              console.warn("旧数据无效，跳过备份", error);
+            }
+          }
+          localStorage.setItem(key, serialized);
         } catch (error) {
           console.warn("写入本地存储失败", error);
           showToast("浏览器本地存储不可用，数据可能无法保存。", "error");
+        }
+      }
+
+      async function requestPersistentStorage() {
+        try {
+          if (!navigator.storage?.persist) return false;
+          if (await navigator.storage.persisted?.()) return true;
+          const granted = await navigator.storage.persist();
+          console.info("本地持久化存储", granted ? "已启用" : "未授予");
+          return Boolean(granted);
+        } catch (error) {
+          console.warn("申请持久化存储失败", error);
+          return false;
         }
       }
 
@@ -1521,7 +1810,7 @@
 
       /** 页面切换：不刷新，仅控制 section 显示和导航激活状态。 */
       function showPage(pageName, updateHash = true) {
-        const validPages = ["chat", "budget", "review"];
+        const validPages = ["chat", "budget", "review", "profile"];
         if (!validPages.includes(pageName)) pageName = "chat";
         state.activePage = pageName;
 
@@ -1540,6 +1829,7 @@
         }
         if (pageName === "budget") renderBudgetPage();
         if (pageName === "review") renderReviewPage();
+        if (pageName === "profile") renderProfilePage();
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
@@ -1555,6 +1845,189 @@
         });
       }
 
+      function formatProfileDate(value, fallback = "—") {
+        if (!value) return fallback;
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return fallback;
+        return date.toLocaleString("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      }
+
+      function getUserInitials(name, email) {
+        const source = String(name || email || "我").replace(/\s+/g, "");
+        return Array.from(source).slice(0, 2).join("") || "我";
+      }
+
+      function setProfileError(message = "") {
+        const element = $("#profile-name-error");
+        if (!element) return;
+        element.textContent = message;
+        element.classList.toggle("hidden", !message);
+      }
+
+      function getProfilePeriodSummary() {
+        const period = state.budgetPeriod === "weekly" ? "weekly" : "monthly";
+        const range = getPeriodRange(period);
+        const periodExpenses = filterExpensesByRange(state.expenses, range);
+        const spent = periodExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+        return {
+          period,
+          periodLabel: period === "weekly" ? "当前周度" : "当前月度",
+          budget: getBudgetForPeriod(period),
+          spent,
+          expenseCount: periodExpenses.length,
+          chatCount: state.chatHistory.filter((message) => message.role === "user").length
+        };
+      }
+
+      function renderProfilePage() {
+        if (!activeUser) return;
+        const storedUser = readAuthUsers().find((user) => user.id === activeUser.id);
+        if (storedUser) activeUser = storedUser;
+
+        const displayName = activeUser.name || activeUser.email || "当前用户";
+        const summary = getProfilePeriodSummary();
+        $("#profile-avatar").textContent = getUserInitials(activeUser.name, activeUser.email);
+        $("#profile-display-name").textContent = displayName;
+        $("#profile-email").textContent = activeUser.email || "未读取到邮箱";
+        $("#profile-account-id").textContent = activeUser.id || "—";
+        $("#profile-created-at").textContent = formatProfileDate(activeUser.createdAt);
+        $("#profile-updated-at").textContent = formatProfileDate(activeUser.updatedAt, "未修改");
+        $("#profile-period-badge").textContent = summary.periodLabel;
+        $("#profile-budget-label").textContent = `${summary.periodLabel}预算`;
+        $("#profile-budget").textContent = summary.budget > 0 ? formatCurrency(summary.budget) : "未设置";
+        $("#profile-spent").textContent = formatCurrency(summary.spent);
+        $("#profile-expense-count").textContent = `${summary.expenseCount} 笔`;
+        $("#profile-chat-count").textContent = `${summary.chatCount} 次`;
+
+        const nameInput = $("#profile-name-input");
+        if (nameInput && document.activeElement !== nameInput) {
+          nameInput.value = activeUser.name || "";
+        }
+      }
+
+      function updateProfileName(rawName) {
+        if (!activeUser) throw new Error("登录状态已失效，请重新登录。");
+        const name = String(rawName || "").trim();
+        if (name.length < 1 || name.length > 20) {
+          throw new Error("昵称长度应为 1 到 20 个字符。");
+        }
+
+        const users = readAuthUsers();
+        const userIndex = users.findIndex((user) => user.id === activeUser.id);
+        if (userIndex < 0) throw new Error("未找到当前账号，请重新登录。");
+
+        const updatedUser = {
+          ...users[userIndex],
+          name,
+          updatedAt: new Date().toISOString()
+        };
+        users[userIndex] = updatedUser;
+        writeAuthUsers(users);
+        activeUser = updatedUser;
+
+        $("#current-user-name").textContent = name;
+        $("#current-user-name").title = `${updatedUser.email} · 查看我的页面`;
+        setProfileError("");
+        renderProfilePage();
+      }
+
+      function exportUserDataBackup() {
+        if (!activeUser) throw new Error("请先登录后再导出数据。");
+        const data = {};
+        Object.entries(STORAGE_KEYS).forEach(([key, storageKey]) => {
+          data[key] = localStorage.getItem(storageKey);
+        });
+        const payload = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          user: {
+            id: activeUser.id,
+            name: activeUser.name,
+            email: activeUser.email
+          },
+          data
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json;charset=utf-8"
+        });
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = `life-wallet-backup-${localDateString()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+      }
+
+      async function importUserDataBackup(file) {
+        if (!file || !activeUser) throw new Error("请选择有效的备份文件。");
+        const rawText = await file.text();
+        const payload = JSON.parse(rawText);
+        if (payload?.version !== 1 || typeof payload.data !== "object" || !payload.data) {
+          throw new Error("备份文件版本不受支持或内容不完整。");
+        }
+        const confirmed = window.confirm("导入备份将覆盖当前账号的预算、消费记录和对话数据，是否继续？");
+        if (!confirmed) return false;
+
+        Object.entries(STORAGE_KEYS).forEach(([key, storageKey]) => {
+          const value = payload.data[key];
+          if (typeof value === "string") {
+            localStorage.setItem(storageKey, value);
+          }
+        });
+        showToast("数据备份导入成功，正在重新载入页面。", "success");
+        window.setTimeout(() => window.location.reload(), 600);
+        return true;
+      }
+
+      function initProfilePage() {
+        const form = $("#profile-form");
+        const input = $("#profile-name-input");
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          setProfileError("");
+          try {
+            updateProfileName(input.value);
+            showToast("昵称已更新。", "success");
+          } catch (error) {
+            setProfileError(error.message || "昵称保存失败，请稍后重试。");
+          }
+        });
+        input.addEventListener("input", () => setProfileError(""));
+        $("#profile-export-data").addEventListener("click", () => {
+          try {
+            exportUserDataBackup();
+            showToast("数据备份已导出。", "success");
+          } catch (error) {
+            showToast(error.message || "数据导出失败。", "error");
+          }
+        });
+        $("#profile-import-data").addEventListener("change", async (event) => {
+          const inputElement = event.target;
+          const file = inputElement.files?.[0];
+          try {
+            await importUserDataBackup(file);
+          } catch (error) {
+            console.warn("导入数据备份失败", error);
+            showToast(error.message || "数据备份导入失败。", "error");
+          } finally {
+            inputElement.value = "";
+          }
+        });
+        $("#profile-logout-button").addEventListener("click", logoutUser);
+        $("#profile-back-to-chat").addEventListener("click", () => showPage("chat"));
+        $("#current-user-name").addEventListener("click", () => showPage("profile"));
+        renderProfilePage();
+      }
+
       function initApiConfiguration() {
         const input = $("#api-base-url");
         input.value = state.apiBaseUrl;
@@ -1563,7 +2036,8 @@
             state.apiBaseUrl = normalizeApiBaseUrl(input.value);
             input.value = state.apiBaseUrl;
             localStorage.setItem(STORAGE_KEYS.apiBaseUrl, state.apiBaseUrl);
-            setApiStatus("online", state.executionMode === "local" ? "本地智能模式 · 无需后端" : "等待后端连接");
+            setApiStatus("online", "等待 DeepSeek 连接");
+            initializeExecutionMode();
             showToast("接口地址已保存。", "success");
           } catch (error) {
             showToast(error.message, "error");
@@ -1895,7 +2369,7 @@
         {
           id: "travel",
           label: "周边出游",
-          pattern: /(周边游|周末游|短途旅行|旅游|出游|度假|两天一夜|三天两夜)/,
+          pattern: /(周边游|周末游|短途旅行|旅行|旅游|出游|度假|两天一夜|三天两夜)/,
           categories: ["旅游住宿", "交通出行", "餐饮美食", "文体娱乐"],
           ratios: [0.43, 0.17, 0.25, 0.15],
           valueRatios: [0.36, 0.2, 0.3, 0.14],
@@ -1970,6 +2444,221 @@
         return null;
       }
 
+      /** 提取一句话中的全部金额及位置，用于把多个预算分别映射到多个问题。 */
+      function localParseBudgetMatches(text) {
+        const matches = [];
+        const seenPositions = new Set();
+        const patterns = [
+          /(?:预算|控制在|不超过|最多|以内|左右)\s*(?:为|是)?\s*(\d+(?:\.\d+)?)(?!\d)(?!\s*(?:元|块))/g,
+          /(\d+(?:\.\d+)?)\s*(?:元|块)(?:钱)?/g
+        ];
+        patterns.forEach((pattern) => {
+          for (const match of text.matchAll(pattern)) {
+            const position = Number(match.index) || 0;
+            if (seenPositions.has(position)) continue;
+            const value = Number(match[1]);
+            if (!Number.isFinite(value) || value <= 0) continue;
+            seenPositions.add(position);
+            matches.push({ value, position });
+          }
+        });
+        return matches.sort((a, b) => a.position - b.position);
+      }
+
+      function localParseBudgets(text) {
+        return localParseBudgetMatches(text).map((match) => match.value);
+      }
+
+      function localIsFollowUp(text) {
+        return /(问题\s*[123]|再|还|换|改|降|提高|增加|减少|这个|那个|它|刚才|上面|继续|便宜|贵一点|好一点|不要|只要|其中|另一)/.test(text);
+      }
+
+      function localCollectPreviousProductIds(history) {
+        const ids = new Set();
+        history.forEach((message) => {
+          if (message.role !== "assistant" || !Array.isArray(message.plans)) return;
+          message.plans.forEach((plan) => {
+            (plan.items || []).forEach((item) => {
+              if (item?.id) ids.add(String(item.id));
+            });
+          });
+        });
+        return ids;
+      }
+
+      function localFindReferencedPlan(history, text) {
+        const match = String(text || "").match(/问题\s*([123])/);
+        if (!match) return null;
+        const lastAssistant = [...history]
+          .reverse()
+          .find((message) => message.role === "assistant" && Array.isArray(message.plans));
+        return lastAssistant?.plans?.[Number(match[1]) - 1] || null;
+      }
+
+      function localPlanProductIds(plan) {
+        return new Set((plan?.items || [])
+          .map((item) => String(item?.id || ""))
+          .filter(Boolean));
+      }
+
+      function localPlanCategories(plan) {
+        const categories = new Set();
+        (plan?.items || []).forEach((item) => {
+          const product = LOCAL_PRODUCTS.find((candidate) => String(candidate.id) === String(item?.id));
+          if (product?.category) categories.add(product.category);
+        });
+        return [...categories];
+      }
+
+      function localSceneFromPlan(plan) {
+        return LOCAL_SCENE_BUNDLES.find((scene) => String(plan?.name || "").includes(scene.label)) || null;
+      }
+
+      function localDefaultBudget(categories, scene) {
+        if (scene?.id === "travel") return 1000;
+        if (scene?.id === "family") return 2500;
+        if (scene?.id === "home") return 800;
+        if (scene?.id === "date") return 500;
+        if (scene?.id === "child") return 500;
+        if (scene?.id === "gift") return 300;
+        if (scene?.id === "health") return 400;
+        if (scene?.id === "commute") return 300;
+        const defaults = categories.map((category) => LOCAL_DEFAULT_BUDGETS[category]).filter(Boolean);
+        return defaults.length ? Math.max(...defaults) : 300;
+      }
+
+      /** 把一轮输入拆成可独立回答的问题，并识别每个问题对应的品类。 */
+      function localSplitQuestionText(text) {
+        const normalized = String(text || "").replace(/\r/g, "\n").trim();
+        if (!normalized) return [];
+        const sentenceParts = normalized
+          .replace(/([?？!！。；;])\s*/g, "$1\n")
+          .split(/\n+/)
+          .map((part) => part.replace(/^(?:[\d一二三四五六七八九十]+[、.．)）]\s*|\s+)/, "").trim())
+          .filter((part) => part.length >= 2);
+        if (sentenceParts.length > 1) return sentenceParts;
+
+        const connectorParts = normalized
+          .split(/(?:另外|此外|还有|同时|顺便)(?:想问|问一下|想|要|帮|请|推荐|买|了解)?/)
+          .map((part) => part.replace(/^[\s,，、]+|[\s,，、]+$/g, "").trim())
+          .filter((part) => part.length >= 2);
+        if (connectorParts.length > 1) return connectorParts;
+
+        const budgetCount = localParseBudgetMatches(normalized).length;
+        const categoryCount = localDetectCategories(normalized).length;
+        const sceneCount = localDetectSceneEntries(normalized).length;
+        if (budgetCount >= 2 || categoryCount >= 2 || sceneCount >= 2) {
+          const conjunctionParts = normalized
+            .split(/(?:以及|和|与|、)/)
+            .map((part) => part.replace(/^[\s,，、]+|[\s,，、]+$/g, "").trim())
+            .filter((part) => part.length >= 2);
+          if (conjunctionParts.length > 1) return conjunctionParts;
+        }
+        return [normalized];
+      }
+
+      function localCategoryPosition(text, category) {
+        const rule = LOCAL_CATEGORY_RULES.find((item) => item.category === category);
+        const positions = (rule?.keywords || [])
+          .map((keyword) => text.indexOf(keyword))
+          .filter((position) => position >= 0);
+        if (category === "数码配件" && /(男生|男性)/.test(text)) {
+          const position = text.search(/(男生|男性)/);
+          if (position >= 0) positions.push(position);
+        }
+        if (category === "文体娱乐" && /(男生|男性)/.test(text)) {
+          const position = text.search(/(男生|男性)/);
+          if (position >= 0) positions.push(position);
+        }
+        if (category === "美妆个护" && /(女生|女性)/.test(text)) {
+          const position = text.search(/(女生|女性)/);
+          if (position >= 0) positions.push(position);
+        }
+        if (category === "礼品文创" && /(女生|女性)/.test(text)) {
+          const position = text.search(/(女生|女性)/);
+          if (position >= 0) positions.push(position);
+        }
+        return positions.length ? Math.min(...positions) : text.length;
+      }
+
+      function localBuildQuestionTopics(text) {
+        const segments = localSplitQuestionText(text);
+        const topics = [];
+
+        segments.forEach((segment, segmentIndex) => {
+          const categoryEntries = localDetectCategories(segment)
+            .map((category) => ({
+              category,
+              position: localCategoryPosition(segment, category)
+            }))
+            .sort((a, b) => a.position - b.position);
+          const sceneEntries = localDetectSceneEntries(segment)
+            .filter(({ scene }) => localShouldUseSceneBundle(scene, segment));
+          if (sceneEntries.length > 1) {
+            sceneEntries.forEach(({ scene, position }) => {
+              topics.push({
+                text: segment,
+                label: scene.label,
+                category: null,
+                scene,
+                segmentIndex,
+                position
+              });
+            });
+            return;
+          }
+
+          const scene = sceneEntries[0]?.scene || null;
+          if (scene) {
+            topics.push({
+              text: segment,
+              label: scene.label,
+              category: null,
+              scene,
+              segmentIndex,
+              position: sceneEntries[0].position
+            });
+            return;
+          }
+
+          if (categoryEntries.length > 1) {
+            categoryEntries.forEach(({ category, position }) => {
+              topics.push({
+                text: segment,
+                label: category,
+                category,
+                scene,
+                segmentIndex,
+                position
+              });
+            });
+            return;
+          }
+
+          const categoryEntry = categoryEntries[0];
+          topics.push({
+            text: segment,
+            label: categoryEntry?.category || scene?.label || `问题${segmentIndex + 1}`,
+            category: categoryEntry?.category || null,
+            scene,
+            segmentIndex,
+            position: categoryEntry?.position ?? 0
+          });
+        });
+
+        return topics;
+      }
+
+      function localBuildGeneralAdviceResponse() {
+        return {
+          answer: "可以，先给你一套不依赖具体商品的通用判断：\n1. 先设预算上限，把“必须买、可以等、只是想要”分开。\n2. 同类商品至少比较到手价、运费、退换和耐用性，不只比较标价。\n3. 高频使用、影响健康或安全的物品优先选可靠款，低频尝鲜选低门槛款。\n4. 满减前先确认是否本来就要购买，避免为优惠凑单。\n如果你补充预算和具体品类，我可以继续给出可执行的商品或预算方案。",
+          plans: [],
+          requires_input: false,
+          suggested_replies: ["200元内推荐耳机", "家庭月预算6000元怎么分配", "周末约会500元怎么安排"],
+          used_tools: []
+        };
+      }
+
       function localDetectCategories(text) {
         const categories = [];
         LOCAL_CATEGORY_RULES.forEach((rule) => {
@@ -1987,8 +2676,18 @@
         return [...new Set(categories)];
       }
 
+      function localDetectSceneEntries(text) {
+        return LOCAL_SCENE_BUNDLES
+          .map((scene) => {
+            const match = text.match(scene.pattern);
+            return match ? { scene, position: Number(match.index) || 0 } : null;
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.position - b.position);
+      }
+
       function localDetectScene(text) {
-        return LOCAL_SCENE_BUNDLES.find((scene) => scene.pattern.test(text)) || null;
+        return localDetectSceneEntries(text)[0]?.scene || null;
       }
 
       function localShouldUseSceneBundle(scene, text) {
@@ -2002,11 +2701,16 @@
       function localExtractKeywords(text) {
         const keywords = [];
         const addKeyword = (keyword) => {
-          if (!keywords.includes(keyword)) keywords.push(keyword);
+          if (keyword && !keywords.includes(keyword)) keywords.push(keyword);
         };
         LOCAL_CATEGORY_RULES.forEach((rule) => {
           rule.keywords.forEach((keyword) => {
             if (text.includes(keyword)) addKeyword(keyword);
+          });
+        });
+        LOCAL_PRODUCTS.forEach((product) => {
+          (product.tags || []).forEach((tag) => {
+            if (text.includes(tag)) addKeyword(tag);
           });
         });
 
@@ -2019,27 +2723,53 @@
         if (/实用/.test(text)) {
           ["实用", "充电宝", "保温杯", "键盘", "家庭", "耐用"].forEach(addKeyword);
         }
-        if (/性价比|划算|省钱/.test(text)) {
+        if (/性价比|划算|省钱|便宜/.test(text)) {
           ["经济实惠", "平价", "高性价比", "耐用"].forEach(addKeyword);
         }
         if (/健康|父母|老人/.test(text)) {
           ["健康", "家庭", "护理", "营养"].forEach(addKeyword);
         }
+        if (/降噪|安静/.test(text)) addKeyword("降噪");
+        if (/轻便|轻量|便携/.test(text)) addKeyword("便携");
+        if (/运动|跑步|健身/.test(text)) addKeyword("运动");
+        if (/通勤|上班/.test(text)) addKeyword("通勤");
         return keywords;
       }
 
-      function localSearchProducts(categories, keywords, budget) {
+      function localSearchProducts(categories, keywords, budget, options = {}) {
+        const excludedIds = options.excludeIds instanceof Set ? options.excludeIds : new Set();
+        const preferenceText = options.preferenceText || "";
+        const wantsValue = /(便宜|省钱|性价比|划算|预算有限|低价)/.test(preferenceText);
+        const wantsQuality = /(品质|耐用|好用|降噪|轻量|高端|送人|仪式感)/.test(preferenceText);
+
         return LOCAL_PRODUCTS
           .filter((product) => product.price <= budget)
           .filter((product) => !categories.length || categories.includes(product.category))
+          .filter((product) => !excludedIds.has(String(product.id)))
           .map((product) => {
-            const searchable = `${product.name} ${product.category} ${product.description} ${product.tags.join(" ")}`;
+            const searchable = `${product.name} ${product.category} ${product.description} ${(product.tags || []).join(" ")}`;
             const keywordMatches = keywords.filter((keyword) => searchable.includes(keyword)).length;
-            const score =
+            let score =
               Number(product.rating) * 22 +
-              keywordMatches * 28 +
+              keywordMatches * 32 +
               Math.max(0, budget - product.price) * 0.08 -
               product.price * 0.035;
+            if (wantsValue) {
+              score += Math.max(0, budget - product.price) * 0.22 - product.price * 0.08;
+            } else {
+              // 用户没有明确要求低价时，不要总把最便宜的商品排在首位。
+              score += Math.min(budget, product.price) * 0.08;
+            }
+            if (wantsQuality) {
+              score += Number(product.rating) * 16 + product.price * 0.035;
+            }
+            if (/(晚餐|晚饭)/.test(preferenceText)) {
+              if (/(午餐|轻食)/.test(searchable)) score -= 120;
+              if (/(火锅|披萨|家庭餐|聚餐)/.test(searchable)) score += 55;
+            } else if (/(午餐|午饭)/.test(preferenceText)) {
+              if (/(火锅|披萨)/.test(searchable)) score -= 60;
+              if (/(午餐|轻食|工作餐)/.test(searchable)) score += 40;
+            }
             return { product, score, keywordMatches };
           })
           .sort((a, b) => b.score - a.score || a.product.price - b.product.price)
@@ -2130,55 +2860,102 @@
         };
       }
 
-      function localBuildShoppingResponse(userInput, budget, categories, keywords, contextText = userInput) {
-        let candidates = localSearchProducts(categories, keywords, budget);
+      function localBuildShoppingResponse(userInput, budget, categories, keywords, contextText = userInput, options = {}) {
+        const excludedIds = options.excludeIds instanceof Set ? options.excludeIds : new Set();
+        const searchOptions = { excludeIds: excludedIds, preferenceText: userInput };
+        let candidates = localSearchProducts(categories, keywords, budget, searchOptions);
         if (!candidates.length && categories.length) {
-          candidates = localSearchProducts([], keywords, budget);
+          candidates = localSearchProducts([], keywords, budget, searchOptions);
+        }
+        if (!candidates.length && excludedIds.size) {
+          candidates = localSearchProducts(categories, keywords, budget, {
+            preferenceText: userInput
+          });
+        }
+
+        if (candidates.length) {
+          const intentKeywords = keywords.filter((keyword) =>
+            candidates.some((product) => `${product.name} ${(product.tags || []).join(" ")}`.includes(keyword))
+          );
+          const intentMatched = candidates.filter((product) =>
+            intentKeywords.some((keyword) =>
+              `${product.name} ${(product.tags || []).join(" ")}`.includes(keyword)
+            )
+          );
+          if (intentMatched.length) candidates = intentMatched;
         }
 
         if (!candidates.length) {
           return {
-            answer: `当前本地商品库中没有找到预算 ¥${budget.toFixed(2)} 内的匹配项。可以适当提高预算、放宽品类，或改为让我先做预算分配。`,
+            answer: `在当前本地商品库中，没有找到预算 ¥${budget.toFixed(2)} 内且符合“${userInput}”的商品。这个预算更适合先做预算分配；你也可以直接说“预算提高到300元”或“换成其他品类”，我会立即重新筛选。`,
             plans: [],
-            requires_input: true,
-            suggested_replies: ["预算提高到300元", "先帮我规划预算", "换一个消费方向"],
+            requires_input: false,
+            suggested_replies: ["预算提高到300元", "换成其他品类", "先帮我规划预算"],
             used_tools: ["search_products"]
           };
         }
 
-        const plans = [];
-        const giftIntent = categories.includes("礼品文创") && /(礼物|生日|送|送礼)/.test(contextText);
+        const shortlist = candidates.slice(0, 6);
+        const wantsValue = /(便宜|省钱|性价比|划算|预算有限|低价)/.test(userInput);
+        const wantsQuality = /(品质|耐用|好用|降噪|轻量|高端|送人|仪式感)/.test(userInput);
         let first = candidates[0];
-        if (giftIntent) {
-          const premiumCandidates = candidates
-            .filter((product) => product.price >= budget * 0.25)
-            .sort((a, b) => b.rating - a.rating || b.price - a.price);
-          if (premiumCandidates.length) first = premiumCandidates[0];
+        if (wantsValue) {
+          const valuePool = shortlist.filter((product) => Number(product.rating) >= 4.2);
+          first = [...(valuePool.length ? valuePool : shortlist)]
+            .sort((a, b) => Number(a.price) - Number(b.price) || Number(b.rating) - Number(a.rating))[0];
+        } else if (wantsQuality) {
+          first = [...shortlist]
+            .sort((a, b) => Number(b.rating) - Number(a.rating) || Number(b.price) - Number(a.price))[0];
         }
 
+        const primaryName = wantsValue
+          ? "预算优先方案"
+          : (wantsQuality ? "品质优先方案" : "需求匹配方案");
+        const secondaryName = wantsValue
+          ? "体验补位方案"
+          : (wantsQuality ? "稳妥性价比方案" : "差异对比方案");
+        const plans = [];
+
         plans.push(localBuildDiscountedPlan(
-          "首选品质方案",
+          primaryName,
           [first],
-          `结合评分、价格和“${userInput}”的需求匹配度，优先推荐${first.category}类选择。`,
+          `针对“${userInput}”，综合${first.category}品类匹配度、评分和到手价选出。`,
           budget
         ));
 
         if (candidates.length > 1) {
-          const second = candidates.find((product) => product.id !== first.id) || candidates[1];
+          const alternatives = candidates.filter((product) => product.id !== first.id);
+          const second = [...alternatives]
+            .sort((a, b) => {
+              const platformDifferenceA = a.platform !== first.platform ? 1 : 0;
+              const platformDifferenceB = b.platform !== first.platform ? 1 : 0;
+              return platformDifferenceB - platformDifferenceA ||
+                Number(b.rating) - Number(a.rating) ||
+                Number(a.price) - Number(b.price);
+            })[0];
           plans.push(localBuildDiscountedPlan(
-            "备选性价比方案",
+            secondaryName,
             [second],
-            "在相同预算下提供另一种选择，适合更关注价格、平台差异或使用频率的场景。",
+            `与首选形成对照：来自${second.platform}，价格和侧重点不同，便于按预算与偏好二次选择。`,
             budget
           ));
         }
 
         const categoryText = categories.length ? categories.join("、") : first.category;
+        const firstPrice = plans[0]?.total_price ?? first.price;
+        const secondPrice = plans[1]?.total_price;
+        const primaryFocus = wantsValue ? "低价优先" : (wantsQuality ? "品质与匹配度优先" : "需求匹配优先");
+        const secondaryFocus = wantsValue ? "保留基础体验" : (wantsQuality ? "兼顾预算与稳妥" : "提供价格和平台差异");
+        const comparisonText = plans.length > 1
+          ? `另提供一套差异选择，预计 ¥${Number(secondPrice).toFixed(2)}。两套方案分别侧重${primaryFocus}与${secondaryFocus}，不会重复同一商品。`
+          : "当前预算下只有这一项匹配度较高，先给你一个可直接执行的方案。";
         return {
-          answer: `已围绕“${userInput}”完成筛选。当前按 ${categoryText} 品类、¥${budget.toFixed(2)} 预算进行比较，并综合评分、价格和平台优惠生成 ${plans.length} 套方案。`,
-          plans: plans.slice(0, 3),
+          answer: `已围绕“${userInput}”完成 ${categoryText} 品类筛选。首推“${first.name}”，预计到手 ¥${Number(firstPrice).toFixed(2)}。${comparisonText}`,
+          plans: plans.slice(0, 2),
           requires_input: false,
-          suggested_replies: ["再便宜一点", "换个消费方向", "重新规划预算"],
+          suggested_replies: wantsValue
+            ? ["再推荐一个不同的", "品质提高一点", "换成其他品类"]
+            : ["再便宜一点", "再推荐一个不同的", "换成其他品类"],
           used_tools: ["search_products", "calculate_discount"]
         };
       }
@@ -2260,9 +3037,17 @@
         };
       }
 
-      function localPickSceneProduct(category, targetBudget, keywords, usedIds) {
-        const candidates = localSearchProducts([category], keywords, targetBudget)
-          .filter((product) => !usedIds.has(product.id));
+      function localPickSceneProduct(category, targetBudget, keywords, usedIds, options = {}) {
+        const excludedIds = new Set([...(options.excludeIds || []), ...usedIds]);
+        let candidates = localSearchProducts([category], keywords, targetBudget, {
+          excludeIds: excludedIds,
+          preferenceText: options.preferenceText || ""
+        });
+        if (!candidates.length && excludedIds.size) {
+          candidates = localSearchProducts([category], keywords, targetBudget, {
+            preferenceText: options.preferenceText || ""
+          });
+        }
         if (!candidates.length) return null;
         const qualityCandidates = candidates.filter((product) =>
           Number(product.price) >= targetBudget * 0.18 && Number(product.rating) >= 4.2
@@ -2274,7 +3059,7 @@
         )[0];
       }
 
-      function localBuildScenePlan(scene, scheme, budget, keywords) {
+      function localBuildScenePlan(scene, scheme, budget, keywords, options = {}) {
         const usedIds = new Set();
         const items = [];
         let allocated = 0;
@@ -2282,7 +3067,7 @@
         scene.categories.forEach((category, index) => {
           const ratio = scheme.ratios[index] ?? 0;
           const target = localRound(budget * ratio);
-          const product = localPickSceneProduct(category, target, keywords, usedIds);
+          const product = localPickSceneProduct(category, target, keywords, usedIds, options);
           if (product) {
             usedIds.add(product.id);
             items.push({
@@ -2319,42 +3104,46 @@
 
         return {
           name: scheme.name,
-          desc: `覆盖${scene.categories.join("、")}，按 ${scheme.note} 控制预算。`,
+          desc: `覆盖${scene.categories.join("、")}，按“${scheme.note}”的思路拆分预算。`,
           items,
           total_price: budget,
-          advantage: `${scheme.advantage} 实际商品之外未用完的额度会进入灵活备用金，整体不超过 ¥${budget.toFixed(2)}。`
+          advantage: `${scheme.advantage} 未用完的额度进入灵活备用金，整体不超过 ¥${budget.toFixed(2)}。`
         };
       }
 
-      function localBuildSceneResponse(userInput, budget, scene) {
-        const keywords = localExtractKeywords(userInput);
-        const plans = [
-          localBuildScenePlan(scene, {
-            id: "balanced",
-            name: "均衡体验方案",
-            ratios: scene.ratios,
-            note: "体验与预算平衡",
-            advantage: `优先兼顾${scene.label}的核心体验，适合希望一次安排完整的用户。`
-          }, budget, keywords),
-          localBuildScenePlan(scene, {
-            id: "value",
-            name: "预算优先方案",
-            ratios: scene.valueRatios,
-            note: "刚需优先、弹性压缩",
-            advantage: `保留${scene.label}的必要环节，同时为后续临时支出留出更多空间。`
-          }, budget, keywords)
-        ];
+      function localBuildSceneResponse(userInput, budget, scene, options = {}) {
+        const keywords = localExtractKeywords(`${userInput} ${options.contextText || ""}`);
+        const excludedIds = options.excludeIds instanceof Set ? options.excludeIds : new Set();
+        const firstPlan = localBuildScenePlan(scene, {
+          id: "experience",
+          name: `体验优先 · ${scene.label}`,
+          ratios: scene.ratios,
+          note: "先保证核心体验",
+          advantage: `优先兼顾${scene.label}的核心体验，适合希望一次安排完整的用户。`
+        }, budget, keywords, { excludeIds: excludedIds, preferenceText: userInput });
+
+        const firstPlanIds = new Set(firstPlan.items.map((item) => String(item.id)));
+        const secondPlan = localBuildScenePlan(scene, {
+          id: "value",
+          name: `预算守门 · ${scene.label}`,
+          ratios: scene.valueRatios,
+          note: "刚需优先、弹性压缩",
+          advantage: `保留${scene.label}的必要环节，并为临时支出留出更多空间。`
+        }, budget, keywords, {
+          excludeIds: new Set([...excludedIds, ...firstPlanIds]),
+          preferenceText: userInput
+        });
 
         return {
-          answer: `已识别为“${scene.label}”场景，并围绕 ${scene.categories.join("、")} 生成 2 套方案。方案会优先选择预算内匹配度较高的商品或服务，未使用额度自动留作灵活备用金。`,
-          plans,
+          answer: `已识别为“${scene.label}”场景，并围绕 ${scene.categories.join("、")} 生成两套不同取舍的方案：第一套保证体验完整，第二套把预算更多留给刚需和备用金。两套方案会优先选择预算内匹配度较高的不同商品或服务。`,
+          plans: [firstPlan, secondPlan],
           requires_input: false,
           suggested_replies: scene.suggestions,
           used_tools: ["budget_allocation", "search_products"]
         };
       }
 
-      function localAgentReply(userInput, history) {
+      function localSingleAgentReply(userInput, history, options = {}) {
         const historyText = history.map((message) => message.content).join("\n");
         const historyUserText = history
           .filter((message) => message.role === "user")
@@ -2362,6 +3151,8 @@
           .join("\n");
 
         const currentBudget = localParseBudget(userInput);
+        const hasBudgetOverride =
+          Number.isFinite(Number(options.budgetOverride)) && Number(options.budgetOverride) > 0;
         const historyBudgets = [...historyUserText.matchAll(/(\d+(?:\.\d+)?)\s*(?:元|块)/g)]
           .map((match) => Number(match[1]));
         const planTotals = [...historyText.matchAll(/"total_price"\s*:\s*(\d+(?:\.\d+)?)/g)]
@@ -2373,75 +3164,103 @@
           ...(lastAssistantMessage?.content || "").matchAll(/"total_price"\s*:\s*(\d+(?:\.\d+)?)/g)
         ].map((match) => Number(match[1]));
         const lastRecommendedPlanTotal = lastAssistantPlanTotals[0] ?? planTotals[0] ?? null;
-        let budget = currentBudget ?? historyBudgets.at(-1) ?? lastRecommendedPlanTotal ?? null;
+        const referencedPlan = localFindReferencedPlan(history, userInput);
+        const referencedTotal = Number(referencedPlan?.total_price);
+        const referencedProductIds = localPlanProductIds(referencedPlan);
+        const referencedCategories = localPlanCategories(referencedPlan);
+        const followUp = Boolean(options.followUp) || localIsFollowUp(userInput);
+        let budget = hasBudgetOverride
+          ? Number(options.budgetOverride)
+          : (
+            currentBudget ??
+            (followUp
+              ? (
+                Number.isFinite(referencedTotal) && referencedTotal > 0
+                  ? referencedTotal
+                  : (historyBudgets.at(-1) ?? lastRecommendedPlanTotal)
+              )
+              : null)
+          );
 
-        let categories = localDetectCategories(userInput);
+        const forcedCategories = options.forcedCategory ? [options.forcedCategory] : [];
+        let categories = forcedCategories.length ? [...forcedCategories] : localDetectCategories(userInput);
         const historyCategories = localDetectCategories(historyText);
-        if (!categories.length && historyCategories.length) {
-          categories = historyCategories.slice(-1);
+        if (!categories.length && followUp) {
+          if (referencedCategories.length) categories = referencedCategories;
+          else if (historyCategories.length) categories = historyCategories.slice(-1);
         }
-        const scene = localDetectScene(userInput) || localDetectScene(historyUserText);
+        const scene = options.forcedScene ||
+          localSceneFromPlan(referencedPlan) ||
+          localDetectScene(userInput) ||
+          (followUp && !referencedPlan ? localDetectScene(historyUserText) : null);
+
         const wantsCheaper = /(再便宜|便宜一点|更便宜|降低预算|省一点|省钱)/.test(userInput);
-        const wantsCategoryChange = /(换个品类|换一种|换个方向|换一个方案|换一份)/.test(userInput);
+        const wantsCategoryChange = /(换个方向|换个品类|换一种|换个类别|不要这个品类)/.test(userInput);
+        const wantsAlternative = /(换一个|换个|再推荐|其他|还有别|不一样|换一批)/.test(userInput);
+        const previousProductIds = options.previousProductIds instanceof Set
+          ? options.previousProductIds
+          : (
+            wantsAlternative
+              ? (referencedProductIds.size ? referencedProductIds : localCollectPreviousProductIds(history))
+              : new Set()
+          );
+
         if (wantsCheaper && budget) {
-          const cheaperBase = lastRecommendedPlanTotal ?? budget;
+          const cheaperBase = referencedTotal > 0 ? referencedTotal : (lastRecommendedPlanTotal ?? budget);
           budget = Math.max(10, localRound(cheaperBase * 0.75));
         }
-        if (wantsCategoryChange && !localDetectCategories(userInput).length && categories.length) {
+        if (wantsCategoryChange && !forcedCategories.length && categories.length) {
           const previousCategory = categories.at(-1);
-          categories = [LOCAL_CATEGORY_SWAPS[previousCategory] || "商超日用"];
+          const swapOptions = LOCAL_CATEGORY_SWAPS[previousCategory] || [];
+          categories = [swapOptions[0] || "生活用品"];
         }
 
         const wantsBudgetPlanning = /(怎么分配|预算.*(规划|安排|分配)|(家庭|月度|周度|生活|旅行|出游|采购).{0,6}预算|生活费|规划.*(支出|消费)|预算.*怎么用)/.test(userInput);
+        let budgetAssumed = false;
+        if (!budget && (categories.length || scene || wantsBudgetPlanning)) {
+          budget = localDefaultBudget(categories, scene) || 3000;
+          budgetAssumed = true;
+        }
 
         if (wantsBudgetPlanning) {
-          if (!budget) {
-            return {
-              answer: "请补充本次预算金额，并说明是家庭、旅行还是日常支出，例如“家庭月度预算6000元怎么分配”。",
-              plans: [],
-              requires_input: true,
-              suggested_replies: ["家庭月度预算6000元", "旅行预算1000元怎么分配", "一周生活费500元怎么安排"],
-              used_tools: []
-            };
+          const response = localBuildBudgetResponse(budget, categories, scene);
+          if (budgetAssumed) {
+            response.answer = `你未提供预算，以下暂按 ¥${budget.toFixed(2)} 的示例预算安排，可直接回复“预算改成……”调整。${response.answer}`;
           }
-          if (scene && localShouldUseSceneBundle(scene, `${historyUserText} ${userInput}`)) {
-            return localBuildSceneResponse(userInput, budget, scene);
-          }
-          return localBuildBudgetResponse(budget, categories, scene);
+          return response;
         }
 
         if (scene && budget && localShouldUseSceneBundle(scene, `${historyUserText} ${userInput}`)) {
-          return localBuildSceneResponse(userInput, budget, scene);
+          const response = localBuildSceneResponse(userInput, budget, scene, {
+            excludeIds: previousProductIds,
+            contextText: historyUserText
+          });
+          if (budgetAssumed) {
+            response.answer = `你未提供预算，以下暂按 ¥${budget.toFixed(2)} 的示例预算安排。${response.answer}`;
+          }
+          if (wantsAlternative) {
+            response.answer = `已避开上一轮出现过的核心商品并重新组合。${response.answer}`;
+          }
+          return response;
         }
 
         if (!budget && !categories.length) {
+          if (/(省钱|性价比|避坑|怎么选|选购|建议|攻略|哪个好|值得买|消费习惯|怎么买)/.test(userInput)) {
+            return localBuildGeneralAdviceResponse();
+          }
           return {
-            answer: "请补充两个关键信息：一是预算范围，二是想购买的品类或使用场景。例如“预算300元改善租房厨房”或“家庭月度预算6000元怎么分配”。",
+            answer: "我可以帮你做具体消费决策。请告诉我一个方向即可，例如“200元以内买耳机”“家庭月度预算6000元怎么分配”或“500元周末约会怎么安排”，我会直接给出可执行方案。",
             plans: [],
             requires_input: true,
-            suggested_replies: ["预算300元改善厨房", "家庭月预算6000元", "1000元周末周边游"],
-            used_tools: []
-          };
-        }
-
-        if (!budget) {
-          return {
-            answer: `已识别到你想了解“${categories.join("、")}”。请补充预算范围，我会继续筛选并计算优惠。`,
-            plans: [],
-            requires_input: true,
-            suggested_replies: ["预算100元以内", "预算300元左右", "预算1000元以内"],
+            suggested_replies: ["200元以内买耳机", "家庭月预算6000元怎么分", "500元周末约会怎么安排"],
             used_tools: []
           };
         }
 
         if (!categories.length) {
-          return {
-            answer: `已识别预算 ¥${budget.toFixed(2)}。请补充想购买的品类或消费场景，例如餐饮美食、家居生活、数码家电、健康医疗、旅游住宿或本地服务。`,
-            plans: [],
-            requires_input: true,
-            suggested_replies: ["餐饮美食", "家居生活", "旅游住宿"],
-            used_tools: []
-          };
+          const response = localBuildBudgetResponse(budget, [], scene);
+          response.answer = `你只提供了预算，尚未限定具体用途。以下先按常见生活支出给出两套分配框架。${response.answer}`;
+          return response;
         }
 
         const keywords = localExtractKeywords(`${historyUserText} ${userInput}`);
@@ -2450,53 +3269,197 @@
           budget,
           categories,
           keywords,
-          `${historyUserText} ${userInput}`
+          `${historyUserText} ${userInput}`,
+          { excludeIds: previousProductIds }
         );
+
+        const prefixes = [];
+        if (budgetAssumed) {
+          prefixes.push(`你未提供预算，以下暂按 ¥${budget.toFixed(2)} 的常见预算给出示例，可直接回复“预算改成……”调整。`);
+        }
         if (wantsCheaper) {
-          response.answer = `已按你的要求将预算下调至约 ¥${budget.toFixed(2)}。${response.answer}`;
+          prefixes.push(`已按你的要求将预算下调至约 ¥${budget.toFixed(2)}。`);
         }
         if (wantsCategoryChange) {
-          response.answer = `已切换到${categories.join("、")}方向。${response.answer}`;
+          prefixes.push(`已切换到${categories.join("、")}方向。`);
+        }
+        if (wantsAlternative) {
+          prefixes.push("已避开上一轮出现过的核心商品，给出不同选择。");
+        }
+        if (prefixes.length) {
+          response.answer = `${prefixes.join("")}${response.answer}`;
         }
         return response;
+      }
+
+      /** 多问题入口：每个问题独立路由，最后合并回答并按问题标注方案。 */
+      function localBuildMultiQuestionReply(userInput, history, topics) {
+        const budgetMatches = localParseBudgetMatches(userInput);
+        const previousProductIds = /(换一个|换个|再推荐|其他|还有别|不一样|换一批)/.test(userInput)
+          ? localCollectPreviousProductIds(history)
+          : new Set();
+        const budgetByTopic = new Map();
+
+        if (budgetMatches.length === topics.length) {
+          const orderedTopics = topics
+            .map((topic, index) => ({
+              index,
+              position: (topic.segmentIndex * 10000) + (topic.position ?? 0)
+            }))
+            .sort((a, b) => a.position - b.position);
+          orderedTopics.forEach((topic, rank) => {
+            budgetByTopic.set(topic.index, budgetMatches[rank].value);
+          });
+        }
+
+        const responses = topics.map((topic, index) => {
+          let budgetOverride = budgetByTopic.get(index) ?? null;
+          if (budgetOverride === null && budgetMatches.length === 1) {
+            budgetOverride = budgetMatches[0].value;
+          }
+          return localSingleAgentReply(topic.text, history, {
+            forcedCategory: topic.category,
+            forcedScene: topic.scene,
+            budgetOverride,
+            previousProductIds,
+            followUp: localIsFollowUp(userInput)
+          });
+        });
+
+        const mergedPlans = [];
+        for (let index = 0; index < responses.length; index += 1) {
+          const firstPlan = responses[index].plans?.[0];
+          if (firstPlan) {
+            mergedPlans.push({
+              ...firstPlan,
+              name: `问题${index + 1} · ${firstPlan.name}`
+            });
+          }
+        }
+        for (let index = 0; index < responses.length && mergedPlans.length < 3; index += 1) {
+          const extraPlan = responses[index].plans?.[1];
+          if (extraPlan) {
+            mergedPlans.push({
+              ...extraPlan,
+              name: `问题${index + 1} · ${extraPlan.name}`
+            });
+          }
+        }
+
+        const sections = responses.map((response, index) => {
+          const label = topics[index].label || `问题${index + 1}`;
+          return `${index + 1}. ${label}\n${response.answer}`;
+        });
+        const hiddenQuestions = Math.max(0, topics.length - 3);
+        const closing = hiddenQuestions
+          ? `\n\n其余 ${hiddenQuestions} 个问题已在上方逐条回答；右侧仅展示前 3 个结构化方案。`
+          : "";
+
+        const suggestions = [];
+        responses.forEach((response) => {
+          (response.suggested_replies || []).forEach((item) => {
+            if (item && !suggestions.includes(item)) suggestions.push(item);
+          });
+        });
+        if (topics.length) suggestions.unshift("把问题1的方案再便宜一点");
+        if (topics.length > 1) suggestions.splice(1, 0, "再推荐一个不同的");
+
+        const usedTools = [...new Set(responses.flatMap((response) => response.used_tools || []))];
+        return {
+          answer: `已识别出 ${topics.length} 个问题，下面逐一处理：\n\n${sections.join("\n\n")}${closing}`,
+          plans: mergedPlans.slice(0, 3),
+          requires_input: responses.every((response) => response.requires_input),
+          suggested_replies: [...new Set(suggestions)].slice(0, 3),
+          used_tools: usedTools
+        };
+      }
+
+      function localAgentReply(userInput, history) {
+        const topics = localBuildQuestionTopics(userInput);
+        if (topics.length > 1) {
+          return localBuildMultiQuestionReply(userInput, history, topics);
+        }
+        return localSingleAgentReply(userInput, history);
       }
 
       function setExecutionMode(mode) {
         state.executionMode = mode;
         const hint = $("#api-mode-hint");
         if (mode === "local") {
-          setApiStatus("online", "本地智能模式 · 无需后端");
-          if (hint) hint.textContent = "当前直接使用内嵌生活消费商品、服务与优惠数据，无需启动后端或配置 API Key。";
+          setApiStatus("online", "本地应急模式 · 请尽快恢复 DeepSeek");
+          if (hint) hint.textContent = "已显式启用本地应急引擎；默认关闭，请恢复 DeepSeek 服务以获得完整智能咨询能力。";
+          return;
+        }
+        if (mode === "unavailable") {
+          setApiStatus("error", "DeepSeek 未就绪");
+          if (hint) hint.textContent = "无法连接 DeepSeek 智能咨询后端，请检查服务地址、DEEPSEEK_API_KEY 与 LLM_PROVIDER=deepseek。";
+          return;
+        }
+        const providerLabel = state.llmProvider === "deepseek" ? "DeepSeek" : "OpenAI";
+        if (state.deepseekConnected) {
+          setApiStatus("online", "DeepSeek 常驻 · 已连接");
+          if (hint) {
+            hint.textContent = `DeepSeek${state.llmModel ? `（${state.llmModel}）` : ""} 常驻连接已就绪，可直接开始咨询，后续会自动心跳保活。`;
+          }
         } else {
-          setApiStatus("online", "后端服务已连接");
-          if (hint) hint.textContent = "当前使用 Flask Agent 后端服务。";
+          setApiStatus("online", "DeepSeek 已启用 · 可直接咨询");
+          if (hint) {
+            hint.textContent = `DeepSeek${state.llmModel ? `（${state.llmModel}）` : ""} 由服务端自动连接和保活，无需手动操作，现在即可直接提问。`;
+          }
         }
       }
 
       async function initializeExecutionMode() {
-        if (IS_FILE_MODE) {
-          setExecutionMode("local");
-          return;
-        }
+        state.localFallbackEnabled = false;
         const controller = new AbortController();
-        const timer = window.setTimeout(() => controller.abort(), 1500);
+        const timer = window.setTimeout(() => controller.abort(), 5000);
         try {
           const response = await fetch(`${state.apiBaseUrl}/health`, {
             cache: "no-store",
             signal: controller.signal
           });
-          if (!response.ok) {
-            setExecutionMode("local");
+          if (!response.ok) throw new Error(`健康检查返回 HTTP ${response.status}`);
+          const healthPayload = await response.json();
+          const configStatus = healthPayload?.config_status || {};
+          state.llmProvider = String(configStatus.llm_provider || "deepseek").toLowerCase();
+          state.llmModel = String(configStatus.llm_model || (state.llmProvider === "deepseek" ? "deepseek-flash" : ""));
+          state.localFallbackEnabled = configStatus.local_fallback_enabled === true;
+          const keyConfigured = typeof configStatus.llm_api_key_configured === "boolean"
+            ? configStatus.llm_api_key_configured
+            : configStatus.openai_api_key_configured;
+          state.deepseekConnected = configStatus.deepseek_connected === true;
+          state.deepseekConnecting = configStatus.deepseek_connecting === true;
+          const deepseekReady = state.deepseekConnected
+            || (state.llmProvider === "deepseek" && keyConfigured !== false)
+            || configStatus.llm_ready === true;
+          if (!deepseekReady) {
+            setExecutionMode("unavailable");
+            const hint = $("#api-mode-hint");
+            const keyName = configStatus.llm_api_key_name || "DEEPSEEK_API_KEY";
+            if (hint) {
+              hint.textContent = `DeepSeek 未就绪：请在后端配置 ${keyName}，并确认 LLM_PROVIDER=deepseek。`;
+            }
             return;
           }
-          const healthPayload = await response.json();
-          const keyConfigured = healthPayload?.config_status?.openai_api_key_configured;
-          setExecutionMode(keyConfigured === false ? "local" : "backend");
+          setExecutionMode("backend");
         } catch (error) {
-          setExecutionMode("local");
+          if (state.localFallbackEnabled) {
+            setExecutionMode("local");
+          } else {
+            setExecutionMode("unavailable");
+          }
         } finally {
           window.clearTimeout(timer);
         }
+      }
+
+      function startExecutionModeMonitor() {
+        if (executionModeMonitorTimer) return;
+        executionModeMonitorTimer = window.setInterval(() => {
+          if (activeUser && !state.isSending) {
+            initializeExecutionMode();
+          }
+        }, 15000);
       }
       /** 兼容后端顶层字段与 data 包裹结构，并统一默认值。 */
       function normalizeAgentPayload(payload) {
@@ -2628,7 +3591,12 @@
         } catch (error) {
           let normalizedError = error;
 
-          if (error instanceof TypeError) {
+          if (error.name === "AbortError") {
+            normalizedError = new ApiRequestError(
+              "DeepSeek 响应超时，请稍后重试",
+              "timeout"
+            );
+          } else if (error instanceof TypeError) {
             const failureKind = await detectNetworkFailureKind(state.apiBaseUrl);
             normalizedError = failureKind === "cors"
               ? new ApiRequestError(
@@ -2683,15 +3651,20 @@
             try {
               payload = await requestAgentReply(userInput, historyForRequest);
             } catch (backendError) {
-              const canFallback =
-                ["connection", "cors", "http_404", "http_500", "invalid_response"].includes(backendError.kind) ||
-                Number(backendError.status) >= 500;
+              const canFallback = state.localFallbackEnabled &&
+                (["connection", "cors", "http_404", "http_500", "timeout", "invalid_response"].includes(backendError.kind) ||
+                  Number(backendError.status) >= 500);
               if (!canFallback) throw backendError;
 
               console.warn("[Agent] 后端不可用，自动切换本地智能模式", backendError);
               setExecutionMode("local");
               payload = localAgentReply(userInput, historyForRequest);
-              showToast("后端服务不可用，已自动切换为本地智能模式。", "info");
+              showToast(
+                backendError.kind === "timeout"
+                  ? "后端响应较慢，已由本地智能引擎立即生成方案。"
+                  : "后端服务不可用，已自动切换为本地智能模式。",
+                "info"
+              );
             }
           }
 
@@ -2712,11 +3685,12 @@
                 : "本地智能模式 · 方案已生成"
             );
           } else {
+            const providerLabel = state.llmProvider === "deepseek" ? "DeepSeek" : "后端";
             setApiStatus(
               "online",
               payload.requires_input
-                ? "后端已连接 · 等待补充信息"
-                : "后端已连接 · 方案已生成"
+                ? `${providerLabel} · 等待补充信息`
+                : `${providerLabel} · 方案已生成`
             );
           }
         } catch (error) {
@@ -3559,12 +4533,15 @@
           return;
         }
         appInitialized = true;
+        requestPersistentStorage();
         loadPersistedState();
         initApiConfiguration();
         initializeExecutionMode();
+        startExecutionModeMonitor();
         initChat();
         initBudgetPage();
         initReviewPage();
+        initProfilePage();
         initShareProject();
         initProjectIntro();
         initNavigation();
@@ -3573,11 +4550,48 @@
         hidePageLoader();
       }
 
-      window.addEventListener("unhandledrejection", (event) => {
-        console.error("未处理的异步异常", event.reason);
-        showToast("页面发生异常，请刷新后重试。", "error");
+      function registerAppShell() {
+        if (!("serviceWorker" in navigator)) return;
+        const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+        if (location.protocol !== "https:" && !localHosts.has(location.hostname)) return;
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("sw.js", { scope: "./", updateViaCache: "none" })
+            .then(() => console.info("应用壳缓存已启用"))
+            .catch((error) => console.warn("Service Worker 注册失败", error));
+        });
+      }
+
+      window.addEventListener("error", (event) => {
+        if (!event.error) return;
+        console.error("页面运行异常", event.error);
+        hidePageLoader();
+        if (activeUser) showToast("页面发生异常，已保留当前数据，请刷新后重试。", "error");
       });
 
+      window.addEventListener("unhandledrejection", (event) => {
+        console.error("未处理的异步异常", event.reason);
+        hidePageLoader();
+        showToast("页面发生异常，已保留当前数据，请刷新后重试。", "error");
+      });
+
+      window.addEventListener("pageshow", (event) => {
+        hidePageLoader();
+        if (event.persisted && activeUser) initializeExecutionMode();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && activeUser) {
+          initializeExecutionMode();
+        }
+      });
+
+      window.addEventListener("online", () => {
+        if (activeUser) initializeExecutionMode();
+      });
+
+      window.setTimeout(() => hidePageLoader(), 8000);
+      registerAppShell();
       initAuth();
     })();
   </script>

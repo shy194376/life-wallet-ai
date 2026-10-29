@@ -82,3 +82,9 @@ def get_openai_api_key() -> str:
     """
 
     return get_env("OPENAI_API_KEY", required=True)
+
+
+def get_deepseek_api_key() -> str:
+    """安全获取 DeepSeek API 密钥。"""
+
+    return get_env("DEEPSEEK_API_KEY", required=True)

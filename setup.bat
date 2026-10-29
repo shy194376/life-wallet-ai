@@ -89,7 +89,7 @@ if not exist ".env" (
         exit /b 1
     )
     echo 已根据 .env.example 创建 .env。
-    echo 即将打开记事本，请填写 OPENAI_API_KEY 后保存并关闭记事本。
+    echo 即将打开记事本，请填写 DEEPSEEK_API_KEY 后保存并关闭记事本。
     start "" notepad ".env"
 ) else (
     echo 已检测到 .env，跳过复制。
@@ -99,9 +99,9 @@ echo.
 echo ============================================================
 echo   环境初始化完成
 echo ============================================================
-echo 请确认 .env 中已经填写自己的 OPENAI_API_KEY。
+echo 请确认 .env 中已经填写自己的 DEEPSEEK_API_KEY。
 echo 然后双击运行 start.bat 启动后端服务。
-echo 后端启动后，再双击打开 index.html 即可使用。
+echo 后端启动后，浏览器访问 http://127.0.0.1:5000 即可使用。
 echo ============================================================
 echo.
 pause

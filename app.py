@@ -23,9 +23,14 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, HTTPException
 
-from services.agent_service import AgentServiceError, run_agent
+from services.agent_service import (
+    AgentServiceError,
+    get_llm_runtime_status,
+    run_agent,
+    start_deepseek_connection_monitor,
+)
 from services.consumption_service import list_merchants, recommend_consumption
-from utils.env_utils import get_env
+from utils.env_utils import get_bool_env
 
 # 必须在 Flask 应用创建前加载 .env。
 # load_dotenv 默认不覆盖系统中已经存在的环境变量，便于部署平台注入配置。
@@ -41,7 +46,31 @@ def create_app() -> Flask:
     也方便后续扩展数据库、日志和蓝图等组件。
     """
 
-    flask_app = Flask(__name__)
+    flask_app = Flask(
+        __name__,
+        static_folder=str(BASE_DIR / "assets"),
+        static_url_path="/assets",
+    )
+
+    # 应用创建后立即在后台建立并维持 DeepSeek 连接，用户无需手动连接。
+    start_deepseek_connection_monitor()
+    llm_runtime_status = get_llm_runtime_status()
+    if llm_runtime_status["deepseek_connected"]:
+        flask_app.logger.info(
+            "DeepSeek 常驻连接已就绪：model=%s base_url=%s",
+            llm_runtime_status["model"],
+            llm_runtime_status["base_url"],
+        )
+    elif llm_runtime_status["ready"]:
+        flask_app.logger.info(
+            "DeepSeek 配置已就绪，正在后台自动连接：model=%s",
+            llm_runtime_status["model"],
+        )
+    else:
+        flask_app.logger.warning(
+            "DeepSeek 尚未就绪：%s",
+            llm_runtime_status["error"] or "请检查 LLM_PROVIDER、API Key 和模型配置。",
+        )
 
     # 关闭 JSON 的 ASCII 转义，使接口中的中文在调试时保持可读。
     flask_app.json.ensure_ascii = False
@@ -140,11 +169,62 @@ def create_app() -> Flask:
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         return response
 
+    @flask_app.get("/runtime-config.js")
+    def serve_runtime_config():
+        """提供可部署后修改的前端 API 地址配置。"""
+
+        response = send_from_directory(
+            BASE_DIR,
+            "runtime-config.js",
+            mimetype="application/javascript",
+        )
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
+    @flask_app.get("/sw.js")
+    def serve_service_worker():
+        """由根路径提供 Service Worker，确保可缓存整个应用壳。"""
+
+        response = send_from_directory(
+            BASE_DIR,
+            "sw.js",
+            mimetype="application/javascript",
+        )
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Service-Worker-Allowed"] = "/"
+        return response
+
+    @flask_app.get("/manifest.webmanifest")
+    def serve_manifest():
+        """返回 PWA 清单，便于浏览器安装并稳定恢复页面。"""
+
+        response = send_from_directory(
+            BASE_DIR,
+            "manifest.webmanifest",
+            mimetype="application/manifest+json",
+        )
+        response.headers["Cache-Control"] = "public, max-age=3600"
+        return response
+
     @flask_app.get("/health")
     def health_check():
         """返回服务健康状态、服务器时间和关键配置状态。"""
 
-        openai_key_configured = bool(os.getenv("OPENAI_API_KEY", "").strip())
+        llm_status = get_llm_runtime_status()
+        llm_provider = llm_status["provider"]
+        api_key_name = llm_status["api_key_name"]
+        llm_model = llm_status["model"]
+        llm_base_url = llm_status["base_url"]
+        llm_key_configured = llm_status["api_key_configured"]
+        local_fallback_enabled = get_bool_env("ALLOW_LOCAL_FALLBACK", False)
+
+        def key_is_configured(variable_name: str) -> bool:
+            value = os.getenv(variable_name, "").strip().lower()
+            return bool(value) and not any(
+                marker in value
+                for marker in ("your_", "replace_", "example", "placeholder", "<your")
+            )
+
         return jsonify(
             {
                 "status": "ok",
@@ -152,7 +232,23 @@ def create_app() -> Flask:
                 "app_url": request.host_url.rstrip("/"),
                 "server_time": datetime.now().astimezone().isoformat(timespec="seconds"),
                 "config_status": {
-                    "openai_api_key_configured": openai_key_configured,
+                    "llm_provider": llm_provider,
+                    "llm_model": llm_model,
+                    "llm_base_url": llm_base_url,
+                    "llm_api_key_configured": llm_key_configured,
+                    "llm_api_key_name": api_key_name,
+                    "llm_ready": llm_status["ready"],
+                    "deepseek_connected": llm_status["deepseek_connected"],
+                    "deepseek_connecting": llm_status["deepseek_connecting"],
+                    "deepseek_last_check_at": llm_status["deepseek_last_check_at"],
+                    "deepseek_last_success_at": llm_status["deepseek_last_success_at"],
+                    "deepseek_last_error": llm_status["deepseek_last_error"],
+                    "deepseek_resident": llm_status["deepseek_resident"],
+                    "local_fallback_enabled": local_fallback_enabled,
+                    "llm_error": llm_status["error"],
+                    # 保留旧字段，兼容已有前端和部署检查脚本。
+                    "openai_api_key_configured": key_is_configured("OPENAI_API_KEY"),
+                    "deepseek_api_key_configured": key_is_configured("DEEPSEEK_API_KEY"),
                     "env_file_loaded": bool(ENV_FILE_LOADED),
                     "cors_enabled": True,
                     "cors_origins": "*",
@@ -162,6 +258,36 @@ def create_app() -> Flask:
                     "port": int(os.getenv("PORT", "5000")),
                 },
             }
+        )
+
+    @flask_app.get("/ready")
+    def readiness_check():
+        """仅供部署平台使用：只有 DeepSeek 真正就绪时才返回 HTTP 200。"""
+
+        llm_status = get_llm_runtime_status()
+        deepseek_ready = bool(llm_status["deepseek_resident"])
+        return (
+            jsonify(
+                {
+                    "status": "ready" if deepseek_ready else "not_ready",
+                    "llm_provider": llm_status["provider"],
+                    "llm_model": llm_status["model"],
+                    "llm_ready": llm_status["ready"],
+                    "deepseek_connected": llm_status["deepseek_connected"],
+                    "deepseek_connecting": llm_status["deepseek_connecting"],
+                    "deepseek_resident": llm_status["deepseek_resident"],
+                    "message": (
+                        "DeepSeek 常驻连接已就绪，可直接开始智能咨询。"
+                        if deepseek_ready
+                        else (
+                            llm_status["deepseek_last_error"]
+                            or llm_status["error"]
+                            or "DeepSeek 正在自动连接。"
+                        )
+                    ),
+                }
+            ),
+            200 if deepseek_ready else 503,
         )
 
     @flask_app.get("/api/merchants")
