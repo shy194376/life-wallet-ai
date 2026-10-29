@@ -1,0 +1,7 @@
+{
+  "envId": "molecular-puffin-d0e30pb6c99585d",
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "cloudrun": {
+    "name": "life-wallet-ai"
+  }
+}

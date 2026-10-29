@@ -1,6 +1,8 @@
 # 全场景生活消费决策智能体
 
-> 智能咨询固定使用 DeepSeek。GitHub Pages 只能托管静态页面，不能提供 DeepSeek 后端，请按本文档部署 Flask 服务。
+> **公网入口：** https://life-wallet-ai-337820-13-1520245681.sh.run.tcloudbase.com
+>
+> GitHub Pages 备用入口：https://shy194376.github.io/life-wallet-ai/
 
 ## 项目简介
 
@@ -34,79 +36,62 @@
 
 智能咨询默认不允许静默降级到本地规则引擎。只有服务端显式设置 `ALLOW_LOCAL_FALLBACK=true` 时，才会在 DeepSeek 后端不可用时启用本地应急引擎。
 
-## 通过网址分享
+## 公网访问
 
-项目现在由 Flask 同时托管前端页面和后端接口。部署或启动后，其他人只需在浏览器中打开一个网址即可使用，无需下载项目或配置 Python。
+- **腾讯云 CloudBase 主入口：** https://life-wallet-ai-337820-13-1520245681.sh.run.tcloudbase.com
+- **GitHub Pages 备用入口：** https://shy194376.github.io/life-wallet-ai/
 
-### 方式一：同一局域网分享
+两个入口都连接同一个 CloudBase Run 后端。外部用户可以直接注册、登录并使用 DeepSeek 智能咨询。
 
-1. 双击 `start.bat` 启动网页服务。
-2. 本机访问：`http://127.0.0.1:5000`
-3. 终端会同时显示类似下面的局域网地址：
+## 腾讯云 CloudBase 部署
 
-```text
-局域网分享：http://192.168.1.100:5000
-```
-
-4. 同一 Wi-Fi 或局域网内的其他设备打开该地址即可访问。
-5. 如果其他设备无法访问，请允许 Windows 防火墙放行 Python 或 5000 端口。
-
-局域网地址仅适用于同一网络。要分享给互联网上的其他人，请使用下面的公网部署方式。
-
-### 方式二：Render 公网部署并生成 HTTPS 网址
-
-项目已提供 `render.yaml`，可直接使用 Render Blueprint 部署。公开仓库可从这里开始：[一键部署到 Render](https://render.com/deploy?repo=https://github.com/shy194376/life-wallet-ai)。
-
-1. 将整个项目上传到 GitHub 仓库。
-2. 登录 Render，选择 **New → Blueprint**，连接该项目仓库。
-3. Render 会自动读取 `render.yaml`。
-4. 在环境变量中填写 `DEEPSEEK_API_KEY`；`DEEPSEEK_BASE_URL` 和 `DEEPSEEK_MODEL` 默认已配置。
-5. 点击部署，等待构建完成。
-6. Render 会生成类似下面的公网地址：
+当前 CloudBase 环境：
 
 ```text
-https://life-wallet-ai.onrender.com
+EnvId: molecular-puffin-d0e30pb6c99585d
+Region: ap-shanghai
+Service: life-wallet-ai
+MinInstances: 1
+MaxInstances: 2
 ```
 
-7. 将网址发送给其他人即可直接访问。页面右上角的“分享网址”按钮可一键复制当前公网地址。
+常驻策略：
 
-`render.yaml` 默认使用 `starter` 实例，避免免费实例因长时间无人访问而休眠。Render 使用 `/ready` 作为健康检查；DeepSeek 未连通时部署会被判定为未就绪。
+- 最小实例数为 `1`，避免服务冷启动和自动休眠。
+- DeepSeek 在容器启动后自动连接，30 秒心跳保活。
+- 公网访问类型为 `PUBLIC`。
+- `/ready` 同时检查 Web 服务和 DeepSeek 实际连通状态。
 
-### 方式三：GitHub Pages 静态页面 + Render 后端
+重新部署：
 
-如果希望继续使用 GitHub Pages 公网地址，可让静态页面连接 Render 后端：
+```bash
+npm install -g @cloudbase/cli
+tcb login --intl false
+node deploy-cloudbase.js molecular-puffin-d0e30pb6c99585d
+```
 
-1. 先按上面的方式部署 Render 服务并获得 HTTPS 地址。
-2. 修改 `runtime-config.js`：
+`deploy-cloudbase.js` 会从 `.env` 读取 `DEEPSEEK_API_KEY`，不会把密钥写入源码。
+
+### GitHub Pages + CloudBase
+
+`runtime-config.js` 已固定连接 CloudBase 后端：
 
 ```javascript
 window.LIFE_WALLET_CONFIG = {
-  apiBaseUrl: "https://你的服务名.onrender.com"
+  apiBaseUrl: "https://life-wallet-ai-337820-13-1520245681.sh.run.tcloudbase.com"
 };
 ```
 
-3. 提交并部署 GitHub Pages。终端用户只需打开网址，无需填写任何接口地址。
+终端用户无需配置任何接口地址。
 
-### 方式四：Docker 部署
+### Docker
 
 ```bash
 docker build -t life-wallet-ai .
 docker run --rm -p 5000:5000 --env-file .env life-wallet-ai
 ```
 
-打开 `http://127.0.0.1:5000` 即可访问。Docker 镜像可继续部署到支持容器的云平台。
-
-> 网页访问模式下，前端会自动使用同源接口；静态页面也可通过 `runtime-config.js` 固定后端地址，终端用户无需配置。
-
-## 长期可用与数据保存
-
-- 服务启动后后台自动连接 DeepSeek，30 秒心跳保活，断线自动重连。
-- `render.yaml` 使用 `starter` 常驻实例，适合需要随时通过网址进入的场景。
-- 注册账号、预算、消费记录、复盘数据和对话保存在当前浏览器 LocalStorage。
-- 每次写入预算、消费记录、对话或账号数据前，都会保留上一份有效快照；当前数据损坏时自动恢复备份。\n- “我的”页面支持导出和导入当前账号的数据备份，可用于长期保存或迁移。
-- 页面会申请浏览器持久化存储，降低长期未使用后数据被自动清理的概率。
-- Service Worker 缓存页面、Tailwind、CryptoJS 和密码 Worker；网络短暂中断时页面仍能完整打开，恢复网络后自动重连 DeepSeek。
-- 若浏览器主动清除站点数据，本地账号和数据仍会删除，这是浏览器安全机制，应用无法阻止。
+打开 `http://127.0.0.1:5000` 即可访问。
 
 ## 项目结构
 
@@ -115,6 +100,7 @@ docker run --rm -p 5000:5000 --env-file .env life-wallet-ai
 ├── app.py
 ├── index.html
 ├── runtime-config.js
+├── deploy-cloudbase.js
 ├── sw.js
 ├── manifest.webmanifest
 ├── assets/
